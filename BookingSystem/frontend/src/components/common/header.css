@@ -1,0 +1,15 @@
+.parallax-header {
+  background-image: url('../../assets/cit-chennai-banner.jpg');
+  height: 500px;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Mobile/tablet fallback: disable parallax for performance */
+@media only screen and (max-device-width: 1366px) {
+  .parallax-header {
+    background-attachment: scroll;
+  }
+}

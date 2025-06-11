@@ -1,0 +1,29 @@
+import { Routes, Route } from 'react-router-dom';
+import Home from './pages/user/home';
+import Book from './pages/user/book'; // Create simple components for each
+import Bookings from './pages/user/bookings';
+import Status from './pages/user/status';
+import RoleSelection from './components/auth/RoleSelection';
+import LoginForm from './components/auth/LoginForm';
+import SignupForm from './components/auth/SignupForm';
+import ForgotPassword from './components/auth/ForgotPassword';
+
+function App() {
+  return (
+    <>
+      <Routes>
+  <Route path="/" element={<RoleSelection />} />
+  <Route path="/login/:role" element={<LoginForm />} />
+  <Route path="/signup/:role" element={<SignupForm />} />
+  <Route path="/forgot-password/:role" element={<ForgotPassword />} />
+  <Route path="*" element={<div><b>Page Not Found</b></div>} />
+  <Route path="faculty/home" element={<Home />} />
+  <Route path="/book-a-lab" element={<Book />} />
+  <Route path="/check-allocation" element={<Bookings />} />
+  <Route path="/view-schedule" element={<Status />} />
+</Routes>
+    </>
+  );
+}
+
+export default App;
