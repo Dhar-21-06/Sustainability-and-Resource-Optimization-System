@@ -1,0 +1,58 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #003366;
+  padding: 10px 20px;
+  color: white;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.navbar-logo img {
+  width: 40px;
+  height: 40px;
+}
+
+.navbar-links {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+.navbar-links li {
+  position: relative;
+  cursor: pointer;
+}
+
+.navbar-links li a, .navbar-links li span {
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+}
+
+.dropdown-content {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  background-color: white;
+  min-width: 120px;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  padding: 10px;
+}
+
+.dropdown-content .logout-btn {
+  color: #003366;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.dropdown-content .logout-btn:hover {
+  text-decoration: underline;
+}

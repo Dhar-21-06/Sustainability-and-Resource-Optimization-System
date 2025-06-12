@@ -1,5 +1,5 @@
 .parallax-header {
-  background-image: url('../../assets/cit-chennai-banner.jpg');
+  background-image: url('/public/assets/cit-chennai-banner.jpg');
   height: 500px;
   background-attachment: fixed;
   background-position: center;
