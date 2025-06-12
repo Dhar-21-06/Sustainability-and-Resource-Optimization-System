@@ -7,6 +7,7 @@ const CheckAllocation = () => {
   const [selectedLab, setSelectedLab] = useState('All');
   const [selectedDate, setSelectedDate] = useState('');
   const [activeTab, setActiveTab] = useState('current');
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const allLabs = [
     'Gen AI Lab', 'IoT Lab', 'Rane NSK Lab', 'PEGA Lab', 'CAM Lab', 'CAD Lab',
@@ -27,8 +28,26 @@ const CheckAllocation = () => {
 }, []);
 
 useEffect(() => {
-  const saved = JSON.parse(localStorage.getItem('myBookings')) || [];
-  setBookings(saved);
+  const fetchBookings = () => {
+    const saved = JSON.parse(localStorage.getItem('myBookings')) || [];
+    setBookings(saved);
+
+    // Check if any new 'Pending' request was added recently
+    if (saved.some(b => b.status === 'Pending')) {
+      setShowSuccessMessage(true);
+
+      // Hide after 3 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 3000);
+    }
+  };
+
+  fetchBookings();
+
+  window.addEventListener('storage', fetchBookings);
+
+  return () => window.removeEventListener('storage', fetchBookings);
 }, [activeTab]);
 
   const handleCancelClick = (booking) => {
@@ -56,6 +75,7 @@ useEffect(() => {
   });
   const currentBookings = filteredBookings.filter(b => b.status === 'Approved');
   const pendingRequests = filteredBookings.filter(b => b.status === 'Pending');
+
   const bookingHistory = filteredBookings.filter(b => b.status === 'Completed' || b.status === 'Rejected');
   const notifications = bookings.filter(b => b.notification);
 
@@ -103,6 +123,7 @@ useEffect(() => {
             ))}
           </select>
         </label>
+
 
         <label className="text-sm font-medium text-gray-700">
           Date:

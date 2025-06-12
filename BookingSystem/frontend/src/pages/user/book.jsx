@@ -161,13 +161,40 @@ const handleSubmit = (e) => {
     notification: false
   };
 
-  const existing = JSON.parse(localStorage.getItem('allBookings')) || [];
+  const existing = JSON.parse(localStorage.getItem('myBookings')) || [];
   existing.push(newBooking);
-  localStorage.setItem('allBookings', JSON.stringify(existing));
+  localStorage.setItem('myBookings', JSON.stringify(existing));
 
-  alert("Request sent to admin!");
-  navigate("/my-bookings");
+  // Update pendingApprovals
+  setPendingApprovals(prev => ({
+    ...prev,
+    [selectedLab]: [...(prev[selectedLab] || []), slotToBook]
+  }));
+
+  // Remove slot from available
+  setLabSlots(prev => ({
+    ...prev,
+    [selectedLab]: prev[selectedLab].filter(s => s !== slotToBook)
+  }));
+
+  // Save myBookings for pending requests
+  const myExisting = JSON.parse(localStorage.getItem('myBookings')) || [];
+  myExisting.push({
+    id: Date.now(),
+    lab: selectedLab,
+    time: slotToBook,
+    date: selectedDate,
+    user: user,
+    status: "pending",
+    purpose
+  });
+  localStorage.setItem('myBookings', JSON.stringify(myExisting));
+
+  setShowRequestSent(true);
+  setShowBookModal(false);
+  setSlotToBook(null);
 };
+
 
 
   useEffect(() => {
@@ -176,6 +203,43 @@ const handleSubmit = (e) => {
 
   const savedPendingApprovals = JSON.parse(localStorage.getItem('pendingApprovals')) || {};
   setPendingApprovals(savedPendingApprovals);
+  const myBookings = JSON.parse(localStorage.getItem('myBookings')) || [];
+  const pendingBookings = myBookings.filter(b => b.status === 'pending');
+  <h2 className="text-2xl font-bold mb-4 text-blue-800">Pending Requests</h2>
+{pendingBookings.length === 0 ? (
+  <p>No pending requests.</p>
+) : (
+  pendingBookings.map((booking, index) => (
+    <div key={index} className="p-4 bg-yellow-50 rounded mb-3 flex justify-between items-center">
+      <div>
+        <p><strong>Lab:</strong> {booking.lab}</p>
+        <p><strong>Date:</strong> {booking.date}</p>
+        <p><strong>Time:</strong> {booking.time}</p>
+        <p><strong>Purpose:</strong> {booking.purpose}</p>
+      </div>
+      <button
+        onClick={() => {
+          setSlotToCancel(booking.time);
+          setSelectedLab(booking.lab);
+          setSelectedDate(booking.date);
+          setShowCancelModal(true);
+        }}
+        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+      >
+        Cancel
+      </button>
+    </div>
+  ))
+)}
+
+  const pendingUpdates = {};
+  myBookings.forEach(booking => {
+    if (booking.status === "pending") {
+      if (!pendingUpdates[booking.lab]) pendingUpdates[booking.lab] = [];
+      pendingUpdates[booking.lab].push(booking.time);
+    }
+  });
+  setPendingApprovals(pendingUpdates);
 }, []);
 
   useEffect(() => {
@@ -236,26 +300,44 @@ const handleSubmit = (e) => {
 };
 
   const confirmCancel = () => {
-  setBookedSlots(prev => ({
-    ...prev,
-    [selectedLab]: prev[selectedLab].filter(s => s !== slotToCancel)
-  }));
+  let existing = JSON.parse(localStorage.getItem("myBookings")) || [];
 
-  setLabSlots(prev => ({
-    ...prev,
-    [selectedLab]: [...prev[selectedLab], slotToCancel].sort()
-  }));
-
-  // Update localStorage 'myBookings' (remove the cancelled booking)
-  const existing = JSON.parse(localStorage.getItem('myBookings')) || { pending: [], approved: [], rejected: [] };
-  const updated = existing.filter(
-    b => !(b.lab === selectedLab && b.date === selectedDate && b.time === slotToCancel)
+  // Remove booking from localStorage
+  let updated = existing.filter(
+    (b) =>
+      !(
+        b.lab === selectedLab &&
+        b.date === selectedDate &&
+        b.time === slotToCancel
+      )
   );
-  localStorage.setItem('myBookings', JSON.stringify(updated));
+  localStorage.setItem("myBookings", JSON.stringify(updated));
 
+  // Remove from pendingApprovals state
+  const updatedPendingApprovals = { ...pendingApprovals };
+  if (updatedPendingApprovals[selectedLab]) {
+    updatedPendingApprovals[selectedLab] = updatedPendingApprovals[selectedLab].filter(
+      (s) => s !== slotToCancel
+    );
+  }
+  setPendingApprovals(updatedPendingApprovals);
+
+  // Add back to available labSlots
+  const updatedLabSlots = { ...labSlots };
+  if (!updatedLabSlots[selectedLab].includes(slotToCancel)) {
+    updatedLabSlots[selectedLab].push(slotToCancel);
+    // Optional: sort slots if you want them in time order again
+    updatedLabSlots[selectedLab].sort();
+  }
+  setLabSlots(updatedLabSlots);
+
+  // Close cancel modal and reset state
   setShowCancelModal(false);
   setSlotToCancel(null);
 };
+
+
+
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen relative">
@@ -331,17 +413,19 @@ const handleSubmit = (e) => {
     <button
     key={i}
     className={btnClass}
-    onClick={() => {
-      if (isDisabled) return;
-      if (isPending) {
-        setShowPendingInfo(true);
-        return;
-      }
-      if (isAvailable) {
-        setSlotToBook(slot);
-        setShowBookModal(true);
-      }
-    }}
+   onClick={() => {
+  if (isDisabled) return;
+  if (isPending) {
+    setSlotToBook(slot);   // <== ADD THIS LINE
+    setShowPendingInfo(true);
+    return;
+  }
+  if (isAvailable) {
+    setSlotToBook(slot);
+    setShowBookModal(true);
+  }
+}}
+
     disabled={isDisabled}
     onMouseEnter={(e) => {
       if (isBooked) {
@@ -447,20 +531,33 @@ const handleSubmit = (e) => {
           </div>
         </div>
       )}
-      {showPendingInfo && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white p-5 rounded-lg shadow-lg text-center w-80">
-            <h3 className="text-lg font-semibold text-yellow-700 mb-3">Already Requested</h3>
-            <p className="mb-4 text-gray-700">Your request has already been sent. Please wait for approval.</p>
-              <button
-                onClick={() => setShowPendingInfo(false)}
-                className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
-              >
-                OK
-              </button>
-          </div>
-        </div>
-      )}
+   {showPendingInfo && (
+  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+    <div className="bg-white p-5 rounded-lg shadow-lg text-center w-80">
+      <h3 className="text-lg font-semibold text-yellow-700 mb-3">Already Requested</h3>
+      <p className="mb-4 text-gray-700">You’ve already requested this slot. Would you like to cancel your request?</p>
+      <div className="flex justify-around mt-4">
+        <button
+          onClick={() => {
+            setSlotToCancel(slotToBook);  // mark slot to cancel
+            setShowPendingInfo(false);    // close this modal
+            setShowCancelModal(true);     // open cancel modal
+          }}
+          className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+        >
+          Cancel Request
+        </button>
+        <button
+          onClick={() => setShowPendingInfo(false)}
+          className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+        >
+          Go Back
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };
