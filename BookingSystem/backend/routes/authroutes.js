@@ -5,11 +5,15 @@ const User = require('../models/user');
 const router = express.Router();
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const allowedDomain = process.env.ALLOWED_DOMAIN;
 
 // Register
 router.post('/register', async (req, res) => {
   console.log('📥 Login route hit:', req.body);
   const { email, password, role } = req.body;
+  if (!email.endsWith(`@${allowedDomain}`)) {
+    return res.status(400).json({ message: `Signup allowed only for @${allowedDomain} emails` });
+  }
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: 'User already exists' });
@@ -27,6 +31,9 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   console.log('📥 Login route hit:', req.body);
   const { email, password, role } = req.body;
+  if (!email.endsWith(`@${allowedDomain}`)) {
+    return res.status(403).json({ message: `Login allowed only for @${allowedDomain} emails` });
+  }
   try {
     const user = await User.findOne({ email, role });
     if (!user) return res.status(400).json({ message: 'User not found or role mismatch' });
