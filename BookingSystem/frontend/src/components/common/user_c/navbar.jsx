@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './navbar.css';
 import { Link } from 'react-router-dom';
-import logo from '../../assets/cit-chennai-logo.png';
+import logo from '../../../assets/cit-chennai-logo.png';
 
 function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);

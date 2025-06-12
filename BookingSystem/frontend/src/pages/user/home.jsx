@@ -1,13 +1,11 @@
 import React from 'react';
-import Navbar from '../../components/common/navbar.jsx';
-import Header from '../../components/common/header.jsx';
-import Footer from '../../components/common/footer.jsx';
-import DashboardCard from '../../components/common/dashboardcard.jsx';
-
+import Navbar from '../../components/common/user_c/navbar'
+import Header from '../../components/common/user_c/header';
+import Footer from '../../components/common/user_c/footer';
+import DashboardCard from '../../components/common/user_c/dashboardcard';
 import icon1 from '../../assets/time-icon1.png';
 import icon2 from '../../assets/time-icon2.png';
 import icon3 from '../../assets/time-icon3.png';
-
 import { Link } from 'react-router-dom';
 
 const Home = () => {
@@ -25,17 +23,16 @@ const Home = () => {
   <Link to="/book-a-lab">
     <DashboardCard title="Book a Lab" description="5 Available" icon={icon1} />
   </Link>
-  <Link to="/check-allocation">
+  <Link to="/my-bookings">
     <DashboardCard title="My Bookings" description="2 Booked" icon={icon2} />
   </Link>
-  <Link to="/view-schedule">
+  <Link to="/upoming-events">
     <DashboardCard title="View Upcoming Events" description="Today: 3 Events" icon={icon3} />
   </Link>
 </section>
       </main>
       <Footer />
     </div>
-    
   );
 };
 console.log("Home page loaded");

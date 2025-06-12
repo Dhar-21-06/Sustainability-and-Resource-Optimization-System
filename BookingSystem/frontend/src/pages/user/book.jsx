@@ -1,6 +1,8 @@
-import axios from 'axios';
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 
+
+//book
 const labList = [
   "PEGA Lab", "CAM Lab", "CAD Lab", "Sustainable Material and Surface Metamorphosis Lab",
   "Quantum Science Lab", "Gen AI Lab", "IoT Lab", "MRuby Lab", "Cisco Lab",
@@ -119,36 +121,66 @@ const generateSlots = () => {
 const Book = () => {
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [selectedTime, setSelectedTime] = useState('');
+  const [purpose, setPurpose] = useState('');
   const [selectedLab, setSelectedLab] = useState(null);
   const [bookedSlots, setBookedSlots] = useState({});
   const [slotToBook, setSlotToBook] = useState(null);
   const [slotToCancel, setSlotToCancel] = useState(null);
   const [showBookModal, setShowBookModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [user, setUser] = useState('');
+  const [user, setUser] = useState('Dr. Ravi Kumar');
+  const [pendingApprovals, setPendingApprovals] = useState({});
+  const [showRequestSent, setShowRequestSent] = useState(false);
+  const [showPendingInfo, setShowPendingInfo] = useState(false);
+  const navigate = useNavigate();
+
+const handleSubmit = (e) => {
+  e.preventDefault();
+
+  if (!slotToBook) {
+    alert("No time slot selected.");
+    return;
+  }
+
+  setSelectedTime(slotToBook);
+
+  if (!selectedLab || !selectedDate || !purpose) {
+    alert("Please fill in all details before booking.");
+    return;
+  }
+
+  const newBooking = {
+    id: Date.now(),
+    lab: selectedLab,
+    date: selectedDate,
+    time: slotToBook,
+    faculty: user,
+    purpose,
+    status: 'Pending',
+    rejectionReason: '',
+    notification: false
+  };
+
+  const existing = JSON.parse(localStorage.getItem('allBookings')) || [];
+  existing.push(newBooking);
+  localStorage.setItem('allBookings', JSON.stringify(existing));
+
+  alert("Request sent to admin!");
+  navigate("/my-bookings");
+};
+
+
   useEffect(() => {
   const loggedUser = localStorage.getItem('loggedInUser');
-  if (loggedUser) {
-    setUser(loggedUser);
+  if (loggedUser) setUser(loggedUser);
 
-    // 🆕 Fetch user's bookings
-    axios.get(`http://localhost:5000/api/bookings/${loggedUser}`)
-      .then(res => {
-        const newBookedSlots = {};
-        res.data.forEach(booking => {
-          if (!newBookedSlots[booking.lab]) {
-            newBookedSlots[booking.lab] = [];
-          }
-          newBookedSlots[booking.lab].push(booking.time);
-        });
-        setBookedSlots(newBookedSlots);
-      })
-      .catch(err => {
-        console.error('Failed to fetch bookings');
-      });
-  }
+  const savedPendingApprovals = JSON.parse(localStorage.getItem('pendingApprovals')) || {};
+  setPendingApprovals(savedPendingApprovals);
 }, []);
 
+  useEffect(() => {
+    localStorage.setItem('pendingApprovals', JSON.stringify(pendingApprovals));
+}, [pendingApprovals]);
 
   const [labSlots, setLabSlots] = useState(() => {
     const obj = {};
@@ -158,62 +190,71 @@ const Book = () => {
     return obj;
   });
 
-  const confirmBooking = async () => {
-  try {
-    const res = await axios.post('http://localhost:5000/api/bookings', {
-      username: user,
-      lab: selectedLab,
-      date: selectedDate,
-      time: slotToBook,
-    });
+  const confirmBooking = () => {
+  const existing = JSON.parse(localStorage.getItem('myBookings')) || [];
 
-    setBookedSlots(prev => ({
-      ...prev,
-      [selectedLab]: [...(prev[selectedLab] || []), slotToBook]
-    }));
+  const alreadyBooked = existing.some(
+    booking =>
+      booking.lab === selectedLab &&
+      booking.date === selectedDate &&
+      booking.time === slotToBook &&
+      booking.user === user
+  );
 
-    setLabSlots(prev => ({
-      ...prev,
-      [selectedLab]: prev[selectedLab].filter(s => s !== slotToBook)
-    }));
-
+  if (alreadyBooked) {
+    alert("You have already requested this slot! Wait for the approval");
     setShowBookModal(false);
     setSlotToBook(null);
-  } catch (err) {
-    alert(err.response?.data?.message || 'Booking failed');
-    setShowBookModal(false);
-    setSlotToBook(null);
+    return;
   }
+
+    const newRequest = {
+      id: Date.now(),
+      lab: selectedLab,
+      time: slotToBook,
+      date: selectedDate,
+      user: user,
+      status: "pending"   // added status
+    };
+    
+    existing.push(newRequest);
+    localStorage.setItem('myBookings', JSON.stringify(existing));
+
+  setPendingApprovals(prev => ({
+    ...prev,
+    [selectedLab]: [...(prev[selectedLab] || []), slotToBook]
+  }));
+
+  setLabSlots(prev => ({
+    ...prev,
+    [selectedLab]: prev[selectedLab].filter(s => s !== slotToBook)
+  }));
+
+  setShowBookModal(false);
+  setShowRequestSent(true);
+  setSlotToBook(null);
 };
 
-  const confirmCancel = async () => {
-  try {
-    await axios.delete('http://localhost:5000/api/bookings', {
-      data: {
-        username: user,
-        lab: selectedLab,
-        date: selectedDate,
-        time: slotToCancel
-      }
-    });
+  const confirmCancel = () => {
+  setBookedSlots(prev => ({
+    ...prev,
+    [selectedLab]: prev[selectedLab].filter(s => s !== slotToCancel)
+  }));
 
-    setBookedSlots(prev => ({
-      ...prev,
-      [selectedLab]: prev[selectedLab].filter(s => s !== slotToCancel)
-    }));
+  setLabSlots(prev => ({
+    ...prev,
+    [selectedLab]: [...prev[selectedLab], slotToCancel].sort()
+  }));
 
-    setLabSlots(prev => ({
-      ...prev,
-      [selectedLab]: [...prev[selectedLab], slotToCancel].sort()
-    }));
+  // Update localStorage 'myBookings' (remove the cancelled booking)
+  const existing = JSON.parse(localStorage.getItem('myBookings')) || { pending: [], approved: [], rejected: [] };
+  const updated = existing.filter(
+    b => !(b.lab === selectedLab && b.date === selectedDate && b.time === slotToCancel)
+  );
+  localStorage.setItem('myBookings', JSON.stringify(updated));
 
-    setShowCancelModal(false);
-    setSlotToCancel(null);
-  } catch (err) {
-    alert('Failed to cancel booking');
-    setShowCancelModal(false);
-    setSlotToCancel(null);
-  }
+  setShowCancelModal(false);
+  setSlotToCancel(null);
 };
 
   return (
@@ -263,53 +304,64 @@ const Book = () => {
           <p><strong>Phone:</strong> {labDetails[selectedLab].incharge.phone}</p>
           <p><strong>Email:</strong> {labDetails[selectedLab].incharge.email}</p>
 
-          <h4 className="mt-4 font-semibold text-blue-600">Available Slots:</h4>
+          <h4 className="mt-4 font-semibold text-blue-600"> Slots:</h4>
           <div className="flex flex-wrap gap-3 mt-3">
-            {labSlots[selectedLab].map((slot, i) => {
+            {generateSlots().map((slot, i) => {
               const isBooked = bookedSlots[selectedLab]?.includes(slot);
-              return (
-              <button
-              key={i}
-              className={`px-4 py-2 rounded text-sm border transition 
-                ${isBooked 
-                  ? "bg-red-200 text-red-800 cursor-not-allowed" 
-                  : "bg-gray-100 hover:bg-blue-100 cursor-pointer"}`}
-                  onClick={() => {
-                    if (!isBooked) {
-                      setSlotToBook(slot);
-                      setShowBookModal(true);
-                    }
-                  }}
-                  disabled={isBooked}
-                  >
-                    {slot}
-                    </button>
-                    );
-            })}
+              const isPending = pendingApprovals[selectedLab]?.includes(slot);
+              const isAvailable = labSlots[selectedLab]?.includes(slot);
 
-          </div>
+    // Decide button classes
+    let btnClass = "px-4 py-2 rounded text-sm border transition ";
+    let isDisabled = false;
+    
+    if (isBooked) {
+      btnClass += "bg-gray-100 text-gray-500 cursor-not-allowed";
+      isDisabled = true;
+    } else if (isPending) {
+      btnClass += "bg-yellow-100 text-yellow-800 border-yellow-300 hover:border-yellow-500";
+    } else if (isAvailable) {
+      btnClass += "bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer";
+    } else {
+      // neither available nor pending/booked — slot might be rejected and returned to available
+      btnClass += "bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer";
+    }
 
-          {(bookedSlots[selectedLab] && bookedSlots[selectedLab].length > 0) && (
-            <div className="mt-6">
-              <h4 className="font-semibold text-green-700 mb-2">Booked Slots:</h4>
-              <div className="flex flex-wrap gap-3">
-                {bookedSlots[selectedLab].map((slot, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setSlotToCancel(slot);
-                      setShowCancelModal(true);
-                    }}
-                    className="bg-green-100 text-green-800 px-3 py-2 rounded hover:bg-green-200 border border-green-300"
-                  >
-                    {slot} <span className="ml-2 text-red-600 underline">Cancel</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+    return (
+    <button
+    key={i}
+    className={btnClass}
+    onClick={() => {
+      if (isDisabled) return;
+      if (isPending) {
+        setShowPendingInfo(true);
+        return;
+      }
+      if (isAvailable) {
+        setSlotToBook(slot);
+        setShowBookModal(true);
+      }
+    }}
+    disabled={isDisabled}
+    onMouseEnter={(e) => {
+      if (isBooked) {
+        e.target.innerText = "🚫";
+      }
+    }}
+    onMouseLeave={(e) => {
+      if (isBooked) {
+        e.target.innerText = slot;
+      }
+    }}
+    >
+      {slot}
+      </button>
+      );
+      })}
+      </div>
+      
+      </div>
+    )}
 
       {/* Booking Modal */}
       {showBookModal && (
@@ -320,18 +372,36 @@ const Book = () => {
               Do you want to book <strong>{selectedLab}</strong> at <strong>{slotToBook}</strong>?
             </p>
             <div className="flex justify-around">
-              <button
-                onClick={confirmBooking}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >
-                Confirm
-              </button>
-              <button
-                onClick={() => setShowBookModal(false)}
-                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
+              <form onSubmit={handleSubmit}>
+                {/* Lab selection, date, time dropdowns */}
+
+  <label>Purpose for Booking:</label>
+  <textarea
+  placeholder="Purpose for Booking"
+  value={purpose}
+  onChange={(e) => setPurpose(e.target.value)}
+  className="w-full h-32 p-3 border rounded bg-gray-100 text-gray-800 text-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+></textarea>
+
+
+  <div className="flex justify-around mt-4">
+  <button
+    type="submit"
+    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+  >
+    Send Request
+  </button>
+  <button
+    type="button"
+    onClick={() => setShowBookModal(false)}
+    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+  >
+    Cancel
+  </button>
+</div>
+
+</form>
+
             </div>
           </div>
         </div>
@@ -359,6 +429,35 @@ const Book = () => {
                 Go Back
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showRequestSent && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-5 rounded-lg shadow-lg text-center w-80">
+            <h3 className="text-lg font-semibold text-green-700 mb-3">Request Sent!</h3>
+            <p className="mb-4 text-gray-700">Your booking request has been sent successfully.</p>
+            <button
+            onClick={() => setShowRequestSent(false)}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+      {showPendingInfo && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white p-5 rounded-lg shadow-lg text-center w-80">
+            <h3 className="text-lg font-semibold text-yellow-700 mb-3">Already Requested</h3>
+            <p className="mb-4 text-gray-700">Your request has already been sent. Please wait for approval.</p>
+              <button
+                onClick={() => setShowPendingInfo(false)}
+                className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700"
+              >
+                OK
+              </button>
           </div>
         </div>
       )}

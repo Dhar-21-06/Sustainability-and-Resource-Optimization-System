@@ -1,23 +1,35 @@
 import React, { useState, useEffect } from 'react';
-
+//booking page
 const CheckAllocation = () => {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedLab, setSelectedLab] = useState('All');
   const [selectedDate, setSelectedDate] = useState('');
+  const [activeTab, setActiveTab] = useState('current');
 
   const allLabs = [
     'Gen AI Lab', 'IoT Lab', 'Rane NSK Lab', 'PEGA Lab', 'CAM Lab', 'CAD Lab',
     'Sustainable Material and Surface Metamorphosis Lab', 'Quantum Science Lab',
-    'MRuby Lab', 'Cisco Lab', 'Aryabatta Lab'
+    'MRuby Lab', 'Cisco Lab', 'Aryabatta Lab','Innovation Lab'
   ];
 
   // Load bookings from localStorage
   useEffect(() => {
-    const savedBookings = JSON.parse(localStorage.getItem('myBookings')) || [];
-    setBookings(savedBookings);
-  }, []);
+  const saved = JSON.parse(localStorage.getItem('myBookings')) || [];
+  // ensure `status` exists
+  const mapped = saved.map(b => ({
+    ...b,
+    status: b.status || 'Pending'
+  }));
+  setBookings(mapped);
+  localStorage.setItem('myBookings', JSON.stringify(mapped));
+}, []);
+
+useEffect(() => {
+  const saved = JSON.parse(localStorage.getItem('myBookings')) || [];
+  setBookings(saved);
+}, [activeTab]);
 
   const handleCancelClick = (booking) => {
     setSelectedBooking(booking);
@@ -42,11 +54,41 @@ const CheckAllocation = () => {
     const dateMatch = selectedDate === '' || booking.date === selectedDate;
     return labMatch && dateMatch;
   });
+  const currentBookings = filteredBookings.filter(b => b.status === 'Approved');
+  const pendingRequests = filteredBookings.filter(b => b.status === 'Pending');
+  const bookingHistory = filteredBookings.filter(b => b.status === 'Completed' || b.status === 'Rejected');
+  const notifications = bookings.filter(b => b.notification);
+
 
   return (
     <div className="p-6 min-h-screen bg-[#f9fafb]">
       <h2 className="text-2xl font-bold mb-6 text-blue-800">My Bookings</h2>
-
+      <div className="flex gap-3 mb-6">
+  <button
+    onClick={() => setActiveTab('current')}
+    className={`px-4 py-2 rounded ${activeTab === 'current' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+  >
+    Current Bookings
+  </button>
+  <button
+    onClick={() => setActiveTab('pending')}
+    className={`px-4 py-2 rounded ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+  >
+    Pending Requests
+  </button>
+  <button
+    onClick={() => setActiveTab('history')}
+    className={`px-4 py-2 rounded ${activeTab === 'history' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+  >
+    Booking History
+  </button>
+  <button
+    onClick={() => setActiveTab('notifications')}
+    className={`px-4 py-2 rounded ${activeTab === 'notifications' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+  >
+    Notifications
+  </button>
+</div>
       <div className="flex flex-wrap gap-4 mb-6 items-center">
         <label className="text-sm font-medium text-gray-700">
           Filter by Lab:
@@ -73,31 +115,96 @@ const CheckAllocation = () => {
         </label>
       </div>
 
-      {filteredBookings.length === 0 ? (
-        <p className="text-gray-500">No bookings found for the selected filters.</p>
-      ) : (
-        <ul className="space-y-4">
-          {filteredBookings.map((booking) => (
-            <li
-              key={booking.id}
-              className="p-4 border rounded-xl shadow-md bg-white transition-all transform hover:scale-[1.02] hover:shadow-[0_0_15px_rgba(59,130,246,0.4)]"
-            >
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-lg font-semibold text-blue-700">{booking.lab}</p>
-                  <p className="text-sm text-gray-600">{booking.time} | {booking.date}</p>
-                </div>
-                <button
-                  className="bg-red-500 text-white px-4 py-1 rounded hover:bg-red-600 transition"
-                  onClick={() => handleCancelClick(booking)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+      {activeTab === 'current' && (
+  currentBookings.length === 0 ? (
+    <p className="text-gray-500">No current bookings.</p>
+  ) : (
+    <ul className="space-y-4">
+      {currentBookings.map((booking) => (
+        <li key={booking.id} className="p-4 border rounded-xl shadow bg-white flex justify-between items-center">
+          <div>
+            <p className="text-lg font-semibold text-blue-700">{booking.lab}</p>
+            <p className="text-sm text-gray-600">{booking.time} | {booking.date}</p>
+            <span className={`text-xs px-2 py-1 rounded ${booking.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+              🟢 Approved
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => handleCancelClick(booking)} className="bg-red-500 text-white px-3 py-1 rounded">Cancel</button>
+            <button className="border px-3 py-1 rounded">View</button>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+)}
+
+{activeTab === 'pending' && (
+  pendingRequests.length === 0 ? (
+    <p className="text-gray-500">No pending requests.</p>
+  ) : (
+    <ul className="space-y-4">
+      {pendingRequests.map((booking) => (
+        <li key={booking.id} className="p-4 border rounded-xl bg-white flex justify-between items-center">
+          <div>
+            <p className="text-blue-700 font-semibold">{booking.lab}</p>
+            <p className="text-sm text-gray-600">{booking.time} | {booking.date}</p>
+            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">🕒 Pending</span>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+)}
+
+{activeTab === 'history' && (
+  bookingHistory.length === 0 ? (
+    <p className="text-gray-500">No booking history yet.</p>
+  ) : (
+    <ul className="space-y-4">
+      {bookingHistory.map(booking => (
+  <li key={booking.id} className="...">
+    {/* ... existing lab, date/time, status badge */}
+    <div className="flex gap-2">
+      {booking.status === 'Rejected' && (
+        <button
+          onClick={() => {
+            const newReq = {
+              ...booking,
+              id: Date.now(),
+              status: 'Pending'
+            };
+            const updated = [...bookings, newReq];
+            setBookings(updated);
+            localStorage.setItem('myBookings', JSON.stringify(updated));
+          }}
+          className="border px-3 py-1 rounded"
+        >
+          Rebook
+        </button>
       )}
+      {/* Feedback is optional */}
+    </div>
+  </li>
+))}
+    </ul>
+  )
+)}
+
+{activeTab === 'notifications' && (
+  notifications.length === 0 ? (
+    <p className="text-gray-500">No notifications yet.</p>
+  ) : (
+    <ul className="space-y-4">
+      {notifications.map((booking) => (
+        <li key={booking.id} className="p-4 border rounded-xl bg-white">
+          <p className="text-gray-700">{booking.notification}</p>
+        </li>
+      ))}
+    </ul>
+  )
+)}
+
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
