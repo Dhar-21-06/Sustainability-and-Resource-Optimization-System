@@ -26,7 +26,7 @@ const Home = () => {
   <Link to="/my-bookings">
     <DashboardCard title="My Bookings" description="2 Booked" icon={icon2} />
   </Link>
-  <Link to="/upoming-events">
+  <Link to="/upcoming-events">
     <DashboardCard title="View Upcoming Events" description="Today: 3 Events" icon={icon3} />
   </Link>
 </section>
