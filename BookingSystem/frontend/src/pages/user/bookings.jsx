@@ -8,6 +8,7 @@ const CheckAllocation = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [activeTab, setActiveTab] = useState('current');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [bookedSlots, setBookedSlots] = useState({});
 
   const allLabs = [
     'Gen AI Lab', 'IoT Lab', 'Rane NSK Lab', 'PEGA Lab', 'CAM Lab', 'CAD Lab',
@@ -48,6 +49,11 @@ useEffect(() => {
   window.addEventListener('storage', fetchBookings);
 
   return () => window.removeEventListener('storage', fetchBookings);
+}, [activeTab]);
+
+  useEffect(() => {
+  const booked = JSON.parse(localStorage.getItem("bookedSlots")) || {};
+  setBookedSlots(booked);
 }, [activeTab]);
 
   const handleCancelClick = (booking) => {
@@ -102,12 +108,6 @@ useEffect(() => {
   >
     Booking History
   </button>
-  <button
-    onClick={() => setActiveTab('notifications')}
-    className={`px-4 py-2 rounded ${activeTab === 'notifications' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-  >
-    Notifications
-  </button>
 </div>
       <div className="flex flex-wrap gap-4 mb-6 items-center">
         <label className="text-sm font-medium text-gray-700">
@@ -143,17 +143,20 @@ useEffect(() => {
     <ul className="space-y-4">
       {currentBookings.map((booking) => (
         <li key={booking.id} className="p-4 border rounded-xl shadow bg-white flex justify-between items-center">
-          <div>
-            <p className="text-lg font-semibold text-blue-700">{booking.lab}</p>
-            <p className="text-sm text-gray-600">{booking.time} | {booking.date}</p>
-            <span className={`text-xs px-2 py-1 rounded ${booking.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-              🟢 Approved
-            </span>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => handleCancelClick(booking)} className="bg-red-500 text-white px-3 py-1 rounded">Cancel</button>
-            <button className="border px-3 py-1 rounded">View</button>
-          </div>
+          <div className="mt-8">
+  <h2 className="text-xl font-bold mb-4 text-green-800">Approved Bookings (Admin Confirmed)</h2>
+  {Object.keys(bookedSlots).length === 0 ? (
+    <p className="text-gray-500">No admin approved bookings.</p>
+  ) : (
+    Object.keys(bookedSlots).map((lab) =>
+      bookedSlots[lab].map((slot, index) => (
+        <div key={index} className="p-3 mb-2 border rounded bg-green-50 text-green-800">
+          <strong>{lab}</strong> at {slot}
+        </div>
+      ))
+    )
+  )}
+</div>
         </li>
       ))}
     </ul>
@@ -166,14 +169,23 @@ useEffect(() => {
   ) : (
     <ul className="space-y-4">
       {pendingRequests.map((booking) => (
-        <li key={booking.id} className="p-4 border rounded-xl bg-white flex justify-between items-center">
-          <div>
-            <p className="text-blue-700 font-semibold">{booking.lab}</p>
-            <p className="text-sm text-gray-600">{booking.time} | {booking.date}</p>
-            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">🕒 Pending</span>
-          </div>
-        </li>
-      ))}
+  <li key={booking.id} className="p-4 border rounded-xl bg-white flex justify-between items-center">
+    <div>
+      <p className="text-blue-700 font-semibold">{booking.lab}</p>
+      <p className="text-sm text-gray-600">{booking.time} | {booking.date}</p>
+      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">🕒 Pending</span>
+    </div>
+    <div className="flex gap-2">
+      <button
+        onClick={() => handleCancelClick(booking)}
+        className="bg-red-500 text-white px-3 py-1 rounded"
+      >
+        Cancel
+      </button>
+    </div>
+  </li>
+))}
+
     </ul>
   )
 )}
