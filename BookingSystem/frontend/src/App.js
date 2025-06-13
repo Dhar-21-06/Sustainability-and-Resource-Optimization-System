@@ -11,12 +11,14 @@ import RoleSelection from './components/auth/RoleSelection';
 import LoginForm from './components/auth/LoginForm';
 import SignupForm from './components/auth/SignupForm';
 import ForgotPassword from './components/auth/ForgotPassword';
+import GoogleAuthPage from './components/auth/GoogleAuthPage';
 
 function App() {
   return (
     <>
       <Routes>
   <Route path="/" element={<RoleSelection />} />
+  <Route path="/auth/login/:role" element={<GoogleAuthPage />} />
   <Route path="/login/:role" element={<LoginForm />} />
   <Route path="/signup/:role" element={<SignupForm />} />
   <Route path="/forgot-password/:role" element={<ForgotPassword />} />

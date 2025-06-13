@@ -6,7 +6,8 @@ import GoogleAuthButton from './GoogleAuthButton';
 
 const LoginForm = () => {
   const navigate = useNavigate();
-  const { role } = useParams(); // 'faculty' or 'admin'
+  const path = window.location.pathname;
+  const role = path.includes('admin') ? 'admin' : 'faculty'; // 'faculty' or 'admin'
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

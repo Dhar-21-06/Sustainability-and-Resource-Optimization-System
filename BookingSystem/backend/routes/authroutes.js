@@ -6,13 +6,14 @@ const router = express.Router();
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const allowedDomain = process.env.ALLOWED_DOMAIN;
+const domain = allowedDomain?.trim();
 
 // Register
 router.post('/register', async (req, res) => {
   console.log('📥 Login route hit:', req.body);
   const { email, password, role } = req.body;
-  if (!email.endsWith(`@${allowedDomain}`)) {
-    return res.status(400).json({ message: `Signup allowed only for @${allowedDomain} emails` });
+  if (!email.endsWith(`@${domain}`)) {
+    return res.status(400).json({ message: `Signup allowed only for @${domain} emails` });
   }
   try {
     const existingUser = await User.findOne({ email });
@@ -31,8 +32,8 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   console.log('📥 Login route hit:', req.body);
   const { email, password, role } = req.body;
-  if (!email.endsWith(`@${allowedDomain}`)) {
-    return res.status(403).json({ message: `Login allowed only for @${allowedDomain} emails` });
+  if (!email.endsWith(`@${domain}`)) {
+    return res.status(403).json({ message: `Login allowed only for @${domain} emails` });
   }
   try {
     const user = await User.findOne({ email, role });
