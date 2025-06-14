@@ -1,34 +1,19 @@
 const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  lab: {
-    type: String,
-    required: true
-  },
-  date: {
-    type: Date,
-    required: true
-  },
-  time: {
-    type: String,
-    required: true
-  },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  lab: { type: String, required: true },
+  date: { type: String, required: true },
+  time: { type: String, required: true },
+  purpose: { type: String, required: true }, // ✅ NEW FIELD
   status: {
     type: String,
-    enum: ['Pending', 'Approved', 'Rejected', 'Cancelled', 'Completed'],
-    default: 'Pending'
+    enum: ['Pending', 'Approved', 'Rejected', 'Cancelled'],
+    default: 'Pending',
   },
-  notification: {
-    type: String,
-    default: ''
-  }
-}, {
-  timestamps: true
+  requestedAt: { type: Date, default: Date.now },
+  rejectionTimestamp: { type: Date },
+  rejectionReason: { type: String },
 });
 
-module.exports = mongoose.model('Booking', bookingSchema); 
+module.exports = mongoose.model('Booking', bookingSchema);
