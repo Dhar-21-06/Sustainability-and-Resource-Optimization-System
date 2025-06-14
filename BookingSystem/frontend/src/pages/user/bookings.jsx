@@ -9,6 +9,7 @@ const CheckAllocation = () => {
   const [activeTab, setActiveTab] = useState('current');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [bookedSlots, setBookedSlots] = useState({});
+  const [approvedBookings, setApprovedBookings] = useState([]);
 
   const allLabs = [
     'Gen AI Lab', 'IoT Lab', 'Rane NSK Lab', 'PEGA Lab', 'CAM Lab', 'CAD Lab',
@@ -32,6 +33,11 @@ useEffect(() => {
   const fetchBookings = () => {
     const saved = JSON.parse(localStorage.getItem('myBookings')) || [];
     setBookings(saved);
+
+    const approved = JSON.parse(localStorage.getItem('approvedBookings')) || [];
+setApprovedBookings(approved);
+    
+
 
     // Check if any new 'Pending' request was added recently
     if (saved.some(b => b.status === 'Pending')) {
@@ -84,7 +90,7 @@ useEffect(() => {
 
   const bookingHistory = filteredBookings.filter(b => b.status === 'Completed' || b.status === 'Rejected');
   const notifications = bookings.filter(b => b.notification);
-
+  const rejectedBookings = filteredBookings.filter(b => b.status === 'Rejected');
 
   return (
     <div className="p-6 min-h-screen bg-[#f9fafb]">
@@ -102,6 +108,14 @@ useEffect(() => {
   >
     Pending Requests
   </button>
+
+  <button
+  onClick={() => setActiveTab('rejected')}
+  className={`px-4 py-2 rounded ${activeTab === 'rejected' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+>
+  Rejected Labs
+</button>
+
   <button
     onClick={() => setActiveTab('history')}
     className={`px-4 py-2 rounded ${activeTab === 'history' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
@@ -137,31 +151,33 @@ useEffect(() => {
       </div>
 
       {activeTab === 'current' && (
-  currentBookings.length === 0 ? (
+  currentBookings.length === 0 && approvedBookings.length === 0 ? (
     <p className="text-gray-500">No current bookings.</p>
   ) : (
     <ul className="space-y-4">
       {currentBookings.map((booking) => (
         <li key={booking.id} className="p-4 border rounded-xl shadow bg-white flex justify-between items-center">
-          <div className="mt-8">
-  <h2 className="text-xl font-bold mb-4 text-green-800">Approved Bookings (Admin Confirmed)</h2>
-  {Object.keys(bookedSlots).length === 0 ? (
-    <p className="text-gray-500">No admin approved bookings.</p>
-  ) : (
-    Object.keys(bookedSlots).map((lab) =>
-      bookedSlots[lab].map((slot, index) => (
-        <div key={index} className="p-3 mb-2 border rounded bg-green-50 text-green-800">
-          <strong>{lab}</strong> at {slot}
-        </div>
-      ))
-    )
-  )}
-</div>
+          <div>
+            <p className="text-green-700 font-semibold">{booking.lab}</p>
+            <p className="text-sm text-gray-600">{booking.time} | {booking.date}</p>
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">✅ Approved</span>
+          </div>
+        </li>
+      ))}
+
+      {approvedBookings.map((booking, idx) => (
+        <li key={idx} className="p-4 border rounded-xl shadow bg-white flex justify-between items-center">
+          <div>
+            <p className="text-green-700 font-semibold">{booking.lab}</p>
+            <p className="text-sm text-gray-600">{booking.time} | {booking.date}</p>
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">✅ Admin Approved</span>
+          </div>
         </li>
       ))}
     </ul>
   )
 )}
+
 
 {activeTab === 'pending' && (
   pendingRequests.length === 0 ? (
@@ -189,6 +205,50 @@ useEffect(() => {
     </ul>
   )
 )}
+
+{activeTab === 'rejected' && (
+  rejectedBookings.length === 0 ? (
+    <p className="text-gray-500">No rejected bookings.</p>
+  ) : (
+    <ul className="space-y-4">
+      {rejectedBookings.map((booking) => (
+        <li key={booking.id} className="p-4 border rounded-xl bg-white">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-red-700 font-semibold">{booking.lab}</p>
+              <p className="text-sm text-gray-600">{booking.time} | {booking.date}</p>
+              <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">❌ Rejected</span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const newReq = {
+                    ...booking,
+                    id: Date.now(),
+                    status: 'Pending'
+                  };
+                  const updated = [...bookings, newReq];
+                  setBookings(updated);
+                  localStorage.setItem('myBookings', JSON.stringify(updated));
+                }}
+                className="border px-3 py-1 rounded"
+              >
+                Rebook
+              </button>
+            </div>
+          </div>
+          {/* Show rejected message if exists */}
+          {booking.rejectedMessage && (
+            <p className="mt-2 text-sm text-gray-700">
+              <span className="font-medium">Reason: </span>{booking.rejectedMessage}
+            </p>
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+)}
+
 
 {activeTab === 'history' && (
   bookingHistory.length === 0 ? (
@@ -237,7 +297,6 @@ useEffect(() => {
     </ul>
   )
 )}
-
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center z-50">
