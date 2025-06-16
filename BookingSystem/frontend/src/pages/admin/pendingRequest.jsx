@@ -12,15 +12,23 @@ const PendingRequests = () => {
   const [selectedRejectIndex, setSelectedRejectIndex] = React.useState(null);
   const [confirmationMessage, setConfirmationMessage] = React.useState('');
   const [showConfirmation, setShowConfirmation] = React.useState(false);
-
   
+
   const handleApprove = (index) => {
   const updatedRequests = [...requests];
   const approvedRequest = updatedRequests.splice(index, 1)[0];
 
   const existingApproved = JSON.parse(localStorage.getItem('approvedBookings')) || [];
-  existingApproved.push(approvedRequest);
-  localStorage.setItem('approvedBookings', JSON.stringify(existingApproved));
+existingApproved.push(approvedRequest);
+localStorage.setItem('approvedBookings', JSON.stringify(existingApproved));
+
+// 👉 Disable this lab for 24 hours:
+const disabledLabs = JSON.parse(localStorage.getItem('disabledLabs')) || [];
+disabledLabs.push({
+  lab: approvedRequest.lab,
+  timestamp: new Date().toISOString()
+});
+localStorage.setItem('disabledLabs', JSON.stringify(disabledLabs));
 
   localStorage.setItem('pendingRequests', JSON.stringify(updatedRequests));
   setRequests(updatedRequests);
