@@ -165,26 +165,37 @@ const handleSubmit = (e) => {
   existing.push(newBooking);
   localStorage.setItem('myBookings', JSON.stringify(existing));
 
-  // 👉 Add this block to also update pendingRequests:
-  const pendingRequests = JSON.parse(localStorage.getItem('pendingRequests')) || [];
-  pendingRequests.push(newBooking);
-  localStorage.setItem('pendingRequests', JSON.stringify(pendingRequests));
-
   // Update pendingApprovals
   setPendingApprovals(prev => ({
     ...prev,
     [selectedLab]: [...(prev[selectedLab] || []), slotToBook]
   }));
 
+  // Remove slot from available
   setLabSlots(prev => ({
     ...prev,
     [selectedLab]: prev[selectedLab].filter(s => s !== slotToBook)
   }));
 
+  // Save myBookings for pending requests
+  const myExisting = JSON.parse(localStorage.getItem('myBookings')) || [];
+  myExisting.push({
+    id: Date.now(),
+    lab: selectedLab,
+    time: slotToBook,
+    date: selectedDate,
+    user: user,
+    status: "pending",
+    purpose
+  });
+  localStorage.setItem('myBookings', JSON.stringify(myExisting));
+
   setShowRequestSent(true);
   setShowBookModal(false);
   setSlotToBook(null);
 };
+
+
 
   useEffect(() => {
   const loggedUser = localStorage.getItem('loggedInUser');
@@ -243,7 +254,7 @@ const handleSubmit = (e) => {
     return obj;
   });
 
-const confirmBooking = () => {
+  const confirmBooking = () => {
   const existing = JSON.parse(localStorage.getItem('myBookings')) || [];
 
   const alreadyBooked = existing.some(
@@ -261,26 +272,17 @@ const confirmBooking = () => {
     return;
   }
 
-  const newRequest = {
-  id: Date.now(),
-  lab: selectedLab,
-  time: slotToBook,
-  date: selectedDate,
-  user: user,
-  purpose: purpose, // 👈 add purpose here
-  status: "pending",
-  rejectionReason: '',
-  notification: false
-};
-
-
-  existing.push(newRequest);
-  localStorage.setItem('myBookings', JSON.stringify(existing));
-
-  // 👉 Add this block to also update pendingRequests:
-  const pendingRequests = JSON.parse(localStorage.getItem('pendingRequests')) || [];
-  pendingRequests.push(newRequest);
-  localStorage.setItem('pendingRequests', JSON.stringify(pendingRequests));
+    const newRequest = {
+      id: Date.now(),
+      lab: selectedLab,
+      time: slotToBook,
+      date: selectedDate,
+      user: user,
+      status: "pending"   // added status
+    };
+    
+    existing.push(newRequest);
+    localStorage.setItem('myBookings', JSON.stringify(existing));
 
   setPendingApprovals(prev => ({
     ...prev,
@@ -311,7 +313,7 @@ const confirmBooking = () => {
   );
   localStorage.setItem("myBookings", JSON.stringify(updated));
 
- 
+  // Remove from pendingApprovals state
   const updatedPendingApprovals = { ...pendingApprovals };
   if (updatedPendingApprovals[selectedLab]) {
     updatedPendingApprovals[selectedLab] = updatedPendingApprovals[selectedLab].filter(
@@ -326,13 +328,16 @@ const confirmBooking = () => {
     updatedLabSlots[selectedLab].push(slotToCancel);
     // Optional: sort slots if you want them in time order again
     updatedLabSlots[selectedLab].sort();
-  } // Remove from pendingApprovals state
+  }
   setLabSlots(updatedLabSlots);
 
   // Close cancel modal and reset state
   setShowCancelModal(false);
   setSlotToCancel(null);
 };
+
+
+
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen relative">
