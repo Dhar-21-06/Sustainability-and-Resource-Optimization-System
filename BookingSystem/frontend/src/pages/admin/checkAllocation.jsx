@@ -1,26 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import AdminNavbar from '../../components/common/admin_c/AdminNavbar.jsx';
 import AdminHeader from '../../components/common/admin_c/AdminHeader.jsx';
 import AdminFooter from '../../components/common/admin_c/AdminFooter.jsx';
 import LabCard from '../../components/common/admin_c/LabCard.jsx';
 
 const CheckAllocation = () => {
-  const labs = [
-    {
-      labName: 'Computer Lab 1',
-      slots: [
-        { time: '9:00 AM - 10:00 AM', status: 'Booked' },
-        { time: '10:00 AM - 11:00 AM', status: 'Available' }
-      ]
-    },
-    {
-      labName: 'Physics Lab',
-      slots: [
-        { time: '11:00 AM - 12:00 PM', status: 'Available' },
-        { time: '2:00 PM - 3:00 PM', status: 'Booked' }
-      ]
-    }
-  ];
+  const [labs, setLabs] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get('/api/slots/all');  // You'll need to create this route
+        setLabs(res.data); // Should return array: [{ labName, slots: [{ time, status }] }]
+      } catch (err) {
+        console.error('Failed to fetch slots:', err);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col">

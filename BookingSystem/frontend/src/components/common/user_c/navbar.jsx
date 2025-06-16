@@ -23,6 +23,8 @@ function Navbar() {
           {dropdownOpen && (
             <div className="dropdown-content">
               <span className="logout-btn">Logout</span>
+              <div> &nbsp; </div>
+              <span className="edit-profile"> Edit Profile</span>  
             </div>
           )}
         </li>

@@ -56,3 +56,13 @@
 .dropdown-content .logout-btn:hover {
   text-decoration: underline;
 }
+
+.dropdown-content .edit-profile {
+  color: #003366;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.dropdown-content .edit-profile:hover {
+  text-decoration: underline;
+}

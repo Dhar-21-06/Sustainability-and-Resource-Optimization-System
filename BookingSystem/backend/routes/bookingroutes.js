@@ -1,5 +1,5 @@
 const express = require('express');
-const Booking = require('../models/Booking');
+const Booking = require('../models/bookings');
 const Slot = require('../models/slot');
 const router = express.Router();
 const { notifyUsersAboutAvailableSlots, deleteOldNotifications } = require('../controllers/notificationcontroller');
@@ -11,6 +11,32 @@ router.post('/request', async (req, res) => {
   try {
     const existingSlot = await Slot.findOne({ lab, date, time });
 
+    const approvedBooking = await Booking.findOne({
+      lab,
+      date,
+      time,
+      status: 'Approved'
+    });
+    if (approvedBooking && approvedBooking.userId.toString() !== userId) {
+      return res.status(400).json({ message: 'Slot already booked by another user' });
+    }
+
+    // 🛑 Check if this user was recently rejected for the same slot
+    const recentRejection = await Booking.findOne({
+      userId,
+      lab,
+      date,
+      time,
+      status: 'Rejected'
+    }).sort({ rejectionTimestamp: -1 });
+    if (recentRejection) {
+      const blockedUntil = new Date(recentRejection.rejectionTimestamp);
+      blockedUntil.setHours(blockedUntil.getHours() + 24);
+      if (new Date() < blockedUntil) {
+        return res.status(403).json({ message: 'You must wait 24 hours before rebooking this slot' });
+    }
+  }
+
     if (existingSlot && !existingSlot.isAvailable) {
       return res.status(400).json({ message: 'Slot not available' });
     }
@@ -21,13 +47,42 @@ router.post('/request', async (req, res) => {
       { upsert: true }
     );
 
+    // ⚠️ Warn if slot is already in Pending state by someone else
+    const existingPending = await Booking.findOne({
+      lab,
+      date,
+      time,
+      status: 'Pending'
+    });
+    if (existingPending && existingPending.userId.toString() !== userId) {
+      return res.status(409).json({
+        message: 'This slot is already requested by another user. Do you still want to proceed?',
+        pending: true
+      });
+    }
+
     const newBooking = new Booking({ userId, lab, date, time, purpose }); // ✅ store purpose
     await newBooking.save();
+
+    const User = require('../models/user');
+    const Notification = require('../models/notification');
+    const user = await User.findById(userId);
+    const admins = await User.find({ role: 'admin' });
+    
+    const msg = `${user.name} has requested a booking for ${lab} on ${date} at ${time}.`;
+    
+    for (const admin of admins) {
+      await Notification.create({
+        userId: admin._id,
+        message: msg + ` View Pending`,
+      });
+    }
 
     res.status(201).json({ message: 'Booking request submitted', booking: newBooking });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
+
 });
 
 
@@ -47,6 +102,16 @@ router.patch('/cancel/:id', async (req, res) => {
 
     booking.status = 'Cancelled';
     await booking.save();
+
+    const User = require('../models/user'); // 🔺 Ensure you have this model
+    const Notification = require('../models/notification');
+    const user = await User.findById(booking.userId);
+    const admins = await User.find({ role: 'admin' }); // assuming you use role field
+
+    const adminMsg = `${user.name} has cancelled their approved booking for ${booking.lab} on ${booking.date} at ${booking.time}.`;
+    for (const admin of admins) {
+      await Notification.create({ userId: admin._id, message: adminMsg });
+    }
 
     res.json({ message: 'Booking cancelled and slot released' });
   } catch (err) {
@@ -130,10 +195,25 @@ router.get('/user/:userId', async (req, res) => {
 // 📌 Get booking history for a user (Rejected + Cancelled)
 router.get('/history/:userId', async (req, res) => {
   try {
+    // Maybe run this in cron or check when fetching
+    const now = new Date();
+    await Booking.updateMany(
+      {
+        status: 'Approved',
+        $expr: {
+          $lt: [
+            { $dateFromString: { dateString: { $concat: ['$date', 'T', '$time'] } } },
+            now
+          ]
+        }
+      },
+      { $set: { status: 'Completed' } }
+    );
     const history = await Booking.find({
       userId: req.params.userId,
-      status: { $in: ['Rejected', 'Cancelled'] }
+      status: { $in: ['Rejected', 'Cancelled','Completed'] }
     });
+
     res.json(history);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -193,8 +273,6 @@ router.get('/available', async (req, res) => {
   }
 });
 
-const { notifyUsersAboutAvailableSlots, deleteOldNotifications } = require('../controllers/notificationcontroller');
-
 // 📌 Run this periodically or manually to notify users about available rejected slots
 router.get('/check-rejected-available', async (req, res) => {
   try {
@@ -214,6 +292,32 @@ router.delete('/cleanup-old', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+// In slotroutes.js or bookingroutes.js
+router.get('/slots/all', async (req, res) => {
+  try {
+    const allSlots = await Slot.find({});
+    const formatted = {};
+
+    for (const slot of allSlots) {
+      if (!formatted[slot.lab]) formatted[slot.lab] = [];
+      formatted[slot.lab].push({
+        time: slot.time,
+        status: slot.isAvailable ? 'Available' : 'Booked' // or add logic to show Pending
+      });
+    }
+
+    const result = Object.entries(formatted).map(([labName, slots]) => ({
+      labName,
+      slots
+    }));
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 
 module.exports = router;
