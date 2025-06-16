@@ -36,7 +36,7 @@ useEffect(() => {
 
     const approved = JSON.parse(localStorage.getItem('approvedBookings')) || [];
 setApprovedBookings(approved);
-    
+
 
 
     // Check if any new 'Pending' request was added recently
