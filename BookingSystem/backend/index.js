@@ -9,6 +9,7 @@ const authRoutes = require('./routes/authroutes');
 const notificationRoutes = require('./routes/notificationroutes');
 const resetBlockedSlots = require('./controllers/resetBlockedSlots');
 const labRoutes = require("./routes/labroutes");
+const profileRoutes = require('./routes/profile');
 
 // Run once on server startup
 resetBlockedSlots();
@@ -36,6 +37,7 @@ app.use("/api/labs", labRoutes);
 app.use('/api/bookings', bookingRoutes); // existing
 app.use('/api/auth', authRoutes);        // new for authentication
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Root route
 app.get('/', (req, res) => {

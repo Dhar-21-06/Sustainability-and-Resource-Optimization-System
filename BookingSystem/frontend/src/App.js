@@ -12,6 +12,7 @@ import LoginForm from './components/auth/LoginForm';
 import SignupForm from './components/auth/SignupForm';
 import ForgotPassword from './components/auth/ForgotPassword';
 import GoogleAuthPage from './components/auth/GoogleAuthPage';
+import UserProfile from './pages/user/profile';
 
 function App() {
   return (
@@ -31,6 +32,8 @@ function App() {
   <Route path="/admin/pending-requests" element={<PendingRequests />} />
   <Route path="/admin/check-allocation" element={<CheckAllocation />} />
   <Route path="/admin/upcoming-events" element={<UpcomingEvents />} />
+  <Route path="/user/profile" element={<UserProfile />} />
+
 </Routes>
     </>
   );

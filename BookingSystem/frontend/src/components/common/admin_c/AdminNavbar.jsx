@@ -1,13 +1,23 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import './AdminNavbar.css';
-import { Link } from 'react-router-dom';
 import logo from '../../../assets/cit-chennai-logo.png';
 
 function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const navigate = useNavigate();
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
+  const handleEditProfile = () => {
+    navigate('/user/profile');
   };
 
   return (
@@ -16,13 +26,23 @@ function Navbar() {
         <img src={logo} alt="CIT Logo" />
         <span>Smart Infrastructure Booking System</span>
       </div>
+
       <ul className="navbar-links">
-        <li><a href="#">Home</a></li>
+        <li>
+          <Link to="/user/home">Home</Link>
+        </li>
         <li className="dropdown" onClick={toggleDropdown}>
           <span className="dropdown-toggle">Profile ▾</span>
+
           {dropdownOpen && (
             <div className="dropdown-content">
-              <span className="logout-btn">Logout</span>
+              <span className="edit-profile" onClick={handleEditProfile}>
+                Edit Profile
+              </span>
+              <div>&nbsp;</div>
+              <span className="logout-btn" onClick={handleLogout}>
+                Logout
+              </span>
             </div>
           )}
         </li>
