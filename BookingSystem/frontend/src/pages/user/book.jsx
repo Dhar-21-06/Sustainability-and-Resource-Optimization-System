@@ -1,112 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-
-
-//book
-const labList = [
-  "PEGA Lab", "CAM Lab", "CAD Lab", "Sustainable Material and Surface Metamorphosis Lab",
-  "Quantum Science Lab", "Gen AI Lab", "IoT Lab", "MRuby Lab", "Cisco Lab",
-  "Aryabatta Lab", "Rane NSK Lab", "Innovation Lab"
-];
-
-const labDetails = {
-  "PEGA Lab": {
-    description: "PEGA Lab specializes in BPM and CRM solutions, aiding students in workflow automation.",
-    incharge: {
-      name: "Dr. Pega Incharge",
-      phone: "9000011111",
-      email: "pega@college.edu"
-    }
-  },
-  "CAM Lab": {
-    description: "Computer Aided Manufacturing Lab supports automated production systems and robotics.",
-    incharge: {
-      name: "Dr. CAM Expert",
-      phone: "9000022222",
-      email: "cam@college.edu"
-    }
-  },
-  "CAD Lab": {
-    description: "CAD Lab enables students to design complex components using advanced design tools.",
-    incharge: {
-      name: "Dr. CAD Master",
-      phone: "9000033333",
-      email: "cad@college.edu"
-    }
-  },
-  "Sustainable Material and Surface Metamorphosis Lab": {
-    description: "Focuses on green materials, environmental sustainability and smart surfaces.",
-    incharge: {
-      name: "Dr. Eco Tech",
-      phone: "9000044444",
-      email: "sustainable@college.edu"
-    }
-  },
-  "Quantum Science Lab": {
-    description: "Dedicated to experiments in quantum computing and particle physics.",
-    incharge: {
-      name: "Dr. Quantum Lead",
-      phone: "9000055555",
-      email: "quantum@college.edu"
-    }
-  },
-  "Gen AI Lab": {
-    description: "Focuses on cutting-edge generative AI technologies and deep learning research.",
-    incharge: {
-      name: "Dr. A. I. Vision",
-      phone: "9000066666",
-      email: "genai@college.edu"
-    }
-  },
-  "IoT Lab": {
-    description: "IoT Lab empowers students with real-time sensor network programming experience.",
-    incharge: {
-      name: "Dr. Connected World",
-      phone: "9000077777",
-      email: "iot@college.edu"
-    }
-  },
-  "MRuby Lab": {
-    description: "Designed for embedded scripting in lightweight IoT applications using mruby.",
-    incharge: {
-      name: "Dr. Embedded Ruby",
-      phone: "9000088888",
-      email: "mruby@college.edu"
-    }
-  },
-  "Cisco Lab": {
-    description: "Provides networking infrastructure and simulation tools for real-world routing and switching.",
-    incharge: {
-      name: "Dr. Network Pro",
-      phone: "9000099999",
-      email: "cisco@college.edu"
-    }
-  },
-  "Aryabatta Lab": {
-    description: "A mathematical and computation-intensive lab promoting research in analytics and modeling.",
-    incharge: {
-      name: "Dr. Math Guru",
-      phone: "9000001111",
-      email: "aryabatta@college.edu"
-    }
-  },
-  "Rane NSK Lab": {
-    description: "Sponsored by Rane NSK, this lab supports mechanical engineering R&D and innovation.",
-    incharge: {
-      name: "Dr. Mechanical Mind",
-      phone: "9000002222",
-      email: "ranensk@college.edu"
-    }
-  },
-  "Innovation Lab": {
-    description: "Encourages product design, rapid prototyping, and creative engineering solutions.",
-    incharge: {
-      name: "Dr. Innovator",
-      phone: "9000003333",
-      email: "innovation@college.edu"
-    }
-  }
-};
+import axios from 'axios';
 
 const generateSlots = () => {
   const start = 8;
@@ -128,13 +22,43 @@ const Book = () => {
   const [slotToCancel, setSlotToCancel] = useState(null);
   const [showBookModal, setShowBookModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [user, setUser] = useState('Dr. Ravi Kumar');
+  const [user, setUser] = useState(null);
   const [pendingApprovals, setPendingApprovals] = useState({});
   const [showRequestSent, setShowRequestSent] = useState(false);
   const [showPendingInfo, setShowPendingInfo] = useState(false);
-  const navigate = useNavigate();
+  const [myPendingBookings, setMyPendingBookings] = useState([]);
+  const [labSlots] = useState({})
 
-const handleSubmit = (e) => {
+  const navigate = useNavigate();
+  //book
+  const [labs, setLabs] = useState([]);
+
+useEffect(() => {
+  const fetchLabs = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/labs");
+      setLabs(response.data);
+    } catch (error) {
+      console.error("Error fetching labs:", error);
+    }
+  };
+
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/auth/me", {
+        withCredentials: true, // If you're using cookies for auth
+      });
+      setUser(res.data); // Assumes res.data contains name/email
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  };
+
+  fetchLabs();
+  fetchUser();
+}, []);
+
+const handleSubmit = async (e) => {
   e.preventDefault();
 
   if (!slotToBook) {
@@ -149,191 +73,75 @@ const handleSubmit = (e) => {
     return;
   }
 
-  const newBooking = {
-    id: Date.now(),
-    lab: selectedLab,
-    date: selectedDate,
-    time: slotToBook,
-    faculty: user,
-    purpose,
-    status: 'Pending',
-    rejectionReason: '',
-    notification: false
-  };
-
-  const existing = JSON.parse(localStorage.getItem('myBookings')) || [];
-  existing.push(newBooking);
-  localStorage.setItem('myBookings', JSON.stringify(existing));
-
-  // Update pendingApprovals
-  setPendingApprovals(prev => ({
-    ...prev,
-    [selectedLab]: [...(prev[selectedLab] || []), slotToBook]
-  }));
-
-  // Remove slot from available
-  setLabSlots(prev => ({
-    ...prev,
-    [selectedLab]: prev[selectedLab].filter(s => s !== slotToBook)
-  }));
-
-  // Save myBookings for pending requests
-  const myExisting = JSON.parse(localStorage.getItem('myBookings')) || [];
-  myExisting.push({
-    id: Date.now(),
-    lab: selectedLab,
-    time: slotToBook,
-    date: selectedDate,
-    user: user,
-    status: "pending",
-    purpose
-  });
-  localStorage.setItem('myBookings', JSON.stringify(myExisting));
-
-  setShowRequestSent(true);
-  setShowBookModal(false);
-  setSlotToBook(null);
-};
-
-
-
-  useEffect(() => {
-  const loggedUser = localStorage.getItem('loggedInUser');
-  if (loggedUser) setUser(loggedUser);
-
-  const savedPendingApprovals = JSON.parse(localStorage.getItem('pendingApprovals')) || {};
-  setPendingApprovals(savedPendingApprovals);
-  const myBookings = JSON.parse(localStorage.getItem('myBookings')) || [];
-  const pendingBookings = myBookings.filter(b => b.status === 'pending');
-  <h2 className="text-2xl font-bold mb-4 text-blue-800">Pending Requests</h2>
-{pendingBookings.length === 0 ? (
-  <p>No pending requests.</p>
-) : (
-  pendingBookings.map((booking, index) => (
-    <div key={index} className="p-4 bg-yellow-50 rounded mb-3 flex justify-between items-center">
-      <div>
-        <p><strong>Lab:</strong> {booking.lab}</p>
-        <p><strong>Date:</strong> {booking.date}</p>
-        <p><strong>Time:</strong> {booking.time}</p>
-        <p><strong>Purpose:</strong> {booking.purpose}</p>
-      </div>
-      <button
-        onClick={() => {
-          setSlotToCancel(booking.time);
-          setSelectedLab(booking.lab);
-          setSelectedDate(booking.date);
-          setShowCancelModal(true);
-        }}
-        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-      >
-        Cancel
-      </button>
-    </div>
-  ))
-)}
-
-  const pendingUpdates = {};
-  myBookings.forEach(booking => {
-    if (booking.status === "pending") {
-      if (!pendingUpdates[booking.lab]) pendingUpdates[booking.lab] = [];
-      pendingUpdates[booking.lab].push(booking.time);
-    }
-  });
-  setPendingApprovals(pendingUpdates);
-}, []);
-
-  useEffect(() => {
-    localStorage.setItem('pendingApprovals', JSON.stringify(pendingApprovals));
-}, [pendingApprovals]);
-
-  const [labSlots, setLabSlots] = useState(() => {
-    const obj = {};
-    labList.forEach(lab => {
-      obj[lab] = generateSlots();
+  try {
+    const response = await axios.post("http://localhost:5000/api/bookings", {
+      labId: selectedLab._id,
+      date: selectedDate,
+      time: slotToBook,
+      purpose,
+      userId: user._id,
+      status: "Pending"
     });
-    return obj;
-  });
 
-  const confirmBooking = () => {
-  const existing = JSON.parse(localStorage.getItem('myBookings')) || [];
-
-  const alreadyBooked = existing.some(
-    booking =>
-      booking.lab === selectedLab &&
-      booking.date === selectedDate &&
-      booking.time === slotToBook &&
-      booking.user === user
-  );
-
-  if (alreadyBooked) {
-    alert("You have already requested this slot! Wait for the approval");
+    setShowRequestSent(true);
     setShowBookModal(false);
     setSlotToBook(null);
-    return;
+
+    // Optionally refresh booked slots or pending UI
+    // You can add a call here to refetch booked slots if needed
+  } catch (error) {
+    console.error("Booking failed:", error);
+    alert("Booking failed. Please try again.");
   }
-
-    const newRequest = {
-      id: Date.now(),
-      lab: selectedLab,
-      time: slotToBook,
-      date: selectedDate,
-      user: user,
-      status: "pending"   // added status
-    };
-    
-    existing.push(newRequest);
-    localStorage.setItem('myBookings', JSON.stringify(existing));
-
-  setPendingApprovals(prev => ({
-    ...prev,
-    [selectedLab]: [...(prev[selectedLab] || []), slotToBook]
-  }));
-
-  setLabSlots(prev => ({
-    ...prev,
-    [selectedLab]: prev[selectedLab].filter(s => s !== slotToBook)
-  }));
-
-  setShowBookModal(false);
-  setShowRequestSent(true);
-  setSlotToBook(null);
 };
 
-  const confirmCancel = () => {
-  let existing = JSON.parse(localStorage.getItem("myBookings")) || [];
-
-  // Remove booking from localStorage
-  let updated = existing.filter(
-    (b) =>
-      !(
-        b.lab === selectedLab &&
-        b.date === selectedDate &&
-        b.time === slotToCancel
-      )
-  );
-  localStorage.setItem("myBookings", JSON.stringify(updated));
-
-  // Remove from pendingApprovals state
-  const updatedPendingApprovals = { ...pendingApprovals };
-  if (updatedPendingApprovals[selectedLab]) {
-    updatedPendingApprovals[selectedLab] = updatedPendingApprovals[selectedLab].filter(
-      (s) => s !== slotToCancel
-    );
+const fetchMyBookings = async () => {
+  try {
+    const res = await axios.get(`http://localhost:5000/api/bookings/user/${user._id}`);
+    const pending = res.data.filter(booking => booking.status === "Pending");
+    setPendingApprovals(prev => {
+      const updated = {};
+      pending.forEach(b => {
+        if (!updated[b.lab.name]) updated[b.lab.name] = [];
+        updated[b.lab.name].push(b.time);
+      });
+      return updated;
+    });
+    setMyPendingBookings(pending); // You'll need to create this state
+  } catch (err) {
+    console.error("Failed to fetch user bookings:", err);
   }
-  setPendingApprovals(updatedPendingApprovals);
+};
 
-  // Add back to available labSlots
-  const updatedLabSlots = { ...labSlots };
-  if (!updatedLabSlots[selectedLab].includes(slotToCancel)) {
-    updatedLabSlots[selectedLab].push(slotToCancel);
-    // Optional: sort slots if you want them in time order again
-    updatedLabSlots[selectedLab].sort();
+useEffect(() => {
+  if (user) {
+    fetchMyBookings();
   }
-  setLabSlots(updatedLabSlots);
+}, [user]);
 
-  // Close cancel modal and reset state
-  setShowCancelModal(false);
-  setSlotToCancel(null);
+  const confirmCancel = async () => {
+  try {
+    await axios.delete(`http://localhost:5000/api/bookings/cancel`, {
+      data: {
+        labId: selectedLab._id,
+        date: selectedDate,
+        time: slotToCancel,
+        userId: user._id,
+      },
+    });
+
+    alert("Booking cancelled successfully");
+
+    // Optionally, refetch the bookings to refresh the UI
+    fetchMyBookings();
+
+    // Close modal and reset state
+    setShowCancelModal(false);
+    setSlotToCancel(null);
+  } catch (error) {
+    console.error("Cancel failed:", error);
+    alert("Failed to cancel booking. Try again.");
+  }
 };
 
 
@@ -355,21 +163,21 @@ const handleSubmit = (e) => {
           />
         </div>
 
-      {labList.map((lab, index) => (
+      {labs.map((lab, index) => (
         <div
-        key={index}
+        key={lab._id}
         onClick={() => setSelectedLab(lab)}
         className={`p-4 rounded shadow cursor-pointer transition-transform hover:scale-105 ${
-          selectedLab === lab 
+          selectedLab?._id === lab._id 
           ? 'bg-blue-100 border-2 border-blue-600'
           : 'bg-white hover:shadow-md'
-          }`}
+        }`}
         >
-
-            <h3 className="text-lg font-semibold text-blue-700">{lab}</h3>
-            <p className="text-gray-500 text-sm mt-1">Click to view details</p>
+          <h3 className="text-lg font-semibold text-blue-700">{lab.name}</h3>
+          <p className="text-gray-500 text-sm mt-1">Click to view details</p>
           </div>
         ))}
+
       </div>
       
       {selectedLab && !selectedDate && (
@@ -380,18 +188,19 @@ const handleSubmit = (e) => {
 
       {selectedLab && selectedDate && (
         <div className="mt-8 bg-white p-6 rounded shadow-lg">
-          <h3 className="text-xl font-bold text-blue-800 mb-2">{selectedLab}</h3>
-          <p className="mb-2 text-gray-700">{labDetails[selectedLab].description}</p>
-          <p><strong>Incharge:</strong> {labDetails[selectedLab].incharge.name}</p>
-          <p><strong>Phone:</strong> {labDetails[selectedLab].incharge.phone}</p>
-          <p><strong>Email:</strong> {labDetails[selectedLab].incharge.email}</p>
+          <h3 className="text-xl font-bold text-blue-800 mb-2">{selectedLab.name}</h3>
+          <p className="mb-2 text-gray-700">{selectedLab.description}</p>
+          <p><strong>Incharge:</strong> {selectedLab.incharge?.name}</p>
+          <p><strong>Phone:</strong> {selectedLab.incharge?.phone}</p>
+          <p><strong>Email:</strong> {selectedLab.incharge?.email}</p>
+
 
           <h4 className="mt-4 font-semibold text-blue-600"> Slots:</h4>
           <div className="flex flex-wrap gap-3 mt-3">
             {generateSlots().map((slot, i) => {
-              const isBooked = bookedSlots[selectedLab]?.includes(slot);
-              const isPending = pendingApprovals[selectedLab]?.includes(slot);
-              const isAvailable = labSlots[selectedLab]?.includes(slot);
+              const isBooked = bookedSlots[selectedLab._id]?.includes(slot);
+              const isPending = pendingApprovals[selectedLab._id]?.includes(slot);
+              const isAvailable = labSlots[selectedLab._id]?.includes(slot);
 
     // Decide button classes
     let btnClass = "px-4 py-2 rounded text-sm border transition ";

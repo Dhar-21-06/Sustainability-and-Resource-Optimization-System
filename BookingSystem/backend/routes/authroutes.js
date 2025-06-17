@@ -88,10 +88,42 @@ router.post('/google-auth', async (req, res) => {
       { expiresIn: '2h' }
     );
 
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false, // Set to true in production (HTTPS)
+      sameSite: "Lax",
+      maxAge: 24 * 60 * 60 * 1000 // 1 day
+    });
+
     res.status(200).json({ token, user });
   } catch (error) {
     console.error('Google auth error:', error);
     res.status(400).json({ message: 'Google authentication failed.' });
+  }
+});
+
+
+const verifyToken = (req, res, next) => {
+  const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No token provided" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.userId = decoded.id;
+    next();
+  } catch (err) {
+    return res.status(403).json({ message: "Invalid token" });
+  }
+};
+
+router.get('/me', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('-password'); // Exclude password if exists
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (err) {
+    console.error("Error in /me:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
