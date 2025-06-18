@@ -9,7 +9,7 @@ const authRoutes = require('./routes/authroutes');
 const notificationRoutes = require('./routes/notificationroutes');
 const resetBlockedSlots = require('./controllers/resetBlockedSlots');
 const labRoutes = require("./routes/labroutes");
-const profileRoutes = require('./routes/profile');
+const profileRoutes = require('./routes/profileroutes');
 
 // Run once on server startup
 resetBlockedSlots();
@@ -24,7 +24,6 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
@@ -46,8 +45,7 @@ app.get('/', (req, res) => {
 
 // DB & Server
 const PORT = process.env.PORT || 5000;
-mongoose
-  .connect(process.env.MONGO_URI, {
+mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })

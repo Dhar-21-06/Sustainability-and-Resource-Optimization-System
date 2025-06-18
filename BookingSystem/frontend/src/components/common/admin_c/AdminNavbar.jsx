@@ -17,7 +17,7 @@ function Navbar() {
   };
 
   const handleEditProfile = () => {
-    navigate('/user/profile');
+    navigate('/admin/profile');
   };
 
   return (
