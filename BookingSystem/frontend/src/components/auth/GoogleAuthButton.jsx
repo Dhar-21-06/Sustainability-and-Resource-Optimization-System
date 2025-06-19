@@ -19,6 +19,7 @@
 
     // Optional: Save token in localStorage (but you already have cookie)
     localStorage.setItem('user', JSON.stringify(res.data.user));
+    localStorage.setItem('token', res.data.token); // ✅ store token
 
     // ✅ Now fetch /me to verify token and get complete user details
     const meRes = await axios.get('http://localhost:5000/api/auth/me', {

@@ -36,14 +36,28 @@ const Book = () => {
 
     const fetchUser = async () => {
       try {
-        const userId = JSON.parse(localStorage.getItem('user'))._id;
+    const userId = JSON.parse(localStorage.getItem("user"))._id;
+    const token = localStorage.getItem("token");
 
-        const res = await axios.get(`http://localhost:5000/api/auth/me?id=${userId}`);
-        setUser(res.data); // or whatever you're doing with user data
-      } catch (err) {
-        console.error("❌ Failed to fetch user", err);
-      }
-    };
+    if (!token) {
+      console.error("⚠️ No token found in localStorage");
+      return;
+    }
+
+    const res = await axios.get(`http://localhost:5000/api/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("✅ User fetched:", res.data);
+    setUser(res.data);
+  } catch (err) {
+    console.error("❌ Failed to fetch user", err);
+  }
+};
+
+
 
     fetchLabs();
     fetchUser();
