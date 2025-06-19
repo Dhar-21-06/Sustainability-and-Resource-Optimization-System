@@ -14,6 +14,10 @@ import ForgotPassword from './components/auth/ForgotPassword';
 import GoogleAuthPage from './components/auth/GoogleAuthPage';
 import FacultyProfile from './pages/user/profile';
 import AdminProfile from './pages/admin/profile';
+import Notifications from './pages/user/notification';
+import AdminNotification from './pages/admin/AdminNotification';
+
+
 
 function App() {
   return (
@@ -35,6 +39,9 @@ function App() {
   <Route path="/admin/upcoming-events" element={<UpcomingEvents />} />
   <Route path="/faculty/profile" element={<FacultyProfile />} />
   <Route path="/admin/profile" element={<AdminProfile />} />
+  <Route path="/faculty/notifications" element={<Notifications />} />
+  <Route path="/admin/notifications" element={<AdminNotification />} />
+  
 
 </Routes>
     </>

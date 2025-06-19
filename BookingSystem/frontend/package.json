@@ -16,6 +16,7 @@
     "express": "^5.1.0",
     "google-auth-library": "^9.15.1",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.517.0",
     "mongodb": "^6.17.0",
     "mongoose": "^8.15.1",
     "react": "^19.1.0",
