@@ -1,26 +1,12 @@
-const { queryApi } = require('../config/influxdb');
+const writeApi = require('../config/influxdb');
+const { Point } = require('@influxdata/influxdb-client');
 
-async function fetchMotionData() {
-  const fluxQuery = `
-    from(bucket: "${process.env.INFLUX_BUCKET}")
-      |> range(start: -1h)
-      |> filter(fn: (r) => r._measurement == "motion_status" and r._field == "status")
-      |> yield(name: "motion")
-  `;
+const writeMotionStatus = (motionDetected) => {
+  const point = new Point('motion_status')
+    .booleanField('status', motionDetected)
+    .timestamp(new Date());
 
-  const results = [];
+  writeApi.writePoint(point);
+};
 
-  await queryApi.collectRows(fluxQuery, {
-    next(row, tableMeta) {
-      results.push(tableMeta.toObject(row));
-    },
-    error(error) {
-      console.error('Error querying InfluxDB:', error);
-    },
-    complete() {},
-  });
-
-  return results;
-}
-
-module.exports = { fetchMotionData };
+module.exports = { writeMotionStatus };

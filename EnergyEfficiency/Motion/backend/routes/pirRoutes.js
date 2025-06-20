@@ -1,7 +1,8 @@
 const express = require('express');
-const router = express.Router();
-const { getMotionStatus } = require('../controllers/pirController');
+const { handleMotion } = require('../controllers/pirControllers');
 
-router.get('/status', getMotionStatus);
+const router = express.Router();
+
+router.post('/motion', handleMotion);
 
 module.exports = router;

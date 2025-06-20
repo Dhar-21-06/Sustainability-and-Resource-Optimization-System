@@ -1,23 +1,17 @@
-const { fetchMotionData } = require('../services/influxService');
+const { writeMotionStatus } = require('../services/influxServices');
 
-const getMotionStatus = async (req, res) => {
+const handleMotion = async (req, res) => {
   try {
-    const data = await fetchMotionData();
-
-    if (!data.length) {
-      return res.status(404).json({ message: 'No motion data found' });
+    const { status } = req.body; // expects true or false
+    if (typeof status !== 'boolean') {
+      return res.status(400).json({ error: 'Status must be a boolean' });
     }
-
-    const latest = data[data.length - 1];
-    res.json({
-      status: latest._value === 1 ? 'Motion Detected' : 'No Motion',
-      timestamp: latest._time,
-      raw: latest,
-    });
+    writeMotionStatus(status);
+    res.status(200).json({ message: 'Motion status recorded' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch motion status' });
+    console.error('Error writing motion status:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-module.exports = { getMotionStatus };
+module.exports = { handleMotion };

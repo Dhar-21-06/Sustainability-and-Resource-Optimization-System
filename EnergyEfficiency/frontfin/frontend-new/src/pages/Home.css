@@ -1,0 +1,121 @@
+/* Reset & fill the screen without scroll */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+.dashboard-container {
+  height: 100%;
+  width: 100%;
+  background-image: url("../assets/bg.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+.dashboard-title {
+  text-align: center;
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+  color: #618db5; /* Bright teal */
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+  transition: color 0.3s ease;
+  text-border: #2a3f54;
+}
+
+.dashboard-title:hover {
+  color: #1565c0; /* Slightly darker on hover */
+}
+/* Layout grid with limited height */
+.dashboard-grid {
+  display: grid;
+  grid-template-areas:
+    "motion ldr"
+    "temp temp";
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 0.8rem;
+  width: 90%;
+  max-width: 1200px;
+  height: 85%; /* <= Ensures grid never overflows */
+  box-sizing: border-box;
+}
+
+/* Dashboard card style */
+.dashboard-card {
+  background-color: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  padding: 0.8rem;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+  font-size: 0.85rem;
+  overflow-y: auto;
+  max-height: 100%; /* Allow internal scroll if content overflows */
+}
+
+/* Areas */
+.motion {
+  grid-area: motion;
+  margin-right: 1.5rem; /* 👈 Adds space to the right of Motion card */
+}
+
+.ldr {
+  grid-area: ldr;
+}
+.temp {
+  grid-area: temp;
+  width: 60%;
+  max-height: 90%;
+  justify-self: center; /* Centers it in the grid column */
+  margin-left: 1rem; /* Push slightly to the right */
+}
+
+/* Info section */
+.info-block {
+  margin-top: 0.6rem;
+  background-color: #e8f5e9;
+  padding: 0.6rem;
+  border-left: 4px solid #4caf50;
+  border-radius: 6px;
+  transition: background-color 0.3s;
+}
+
+.info-block:hover {
+  background-color: #c8ecd4;
+}
+
+.info-title {
+  font-size: 1rem;
+  margin-bottom: 0.4rem;
+  color: #2e7d32;
+  transition: color 0.3s;
+}
+
+.info-title:hover {
+  color: #1b5e20;
+}
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: #333;
+}
+
+.info-list li {
+  margin-bottom: 0.3rem;
+  transition: color 0.3s;
+}
+
+.info-list li:hover {
+  color: #000;
+}

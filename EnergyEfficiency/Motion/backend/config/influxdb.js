@@ -1,11 +1,12 @@
 const { InfluxDB } = require('@influxdata/influxdb-client');
-require('dotenv').config();
+require('dotenv').config({ path: './motion/.env' }); // path correction if needed
 
-const influxDB = new InfluxDB({
+const influx = new InfluxDB({
   url: process.env.INFLUX_URL,
   token: process.env.INFLUX_TOKEN,
 });
 
-const queryApi = influxDB.getQueryApi(process.env.INFLUX_ORG);
+const writeApi = influx.getWriteApi(process.env.INFLUX_ORG, process.env.INFLUX_BUCKET, 's');
+writeApi.useDefaultTags({ app: 'motion_monitor' });
 
-module.exports = { queryApi };
+module.exports = writeApi;

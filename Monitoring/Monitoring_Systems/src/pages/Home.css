@@ -1,0 +1,74 @@
+/* src/pages/Home.css */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 2rem;
+  padding: 2rem;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+
+.dashboard-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dashboard-card h2 {
+  color: #2c3e50;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.grafana-panel {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.dashboard-summary {
+  font-size: 0.95rem;
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.dashboard-summary h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  color: #1a202c;
+}
+
+.dashboard-summary ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.dashboard-summary li {
+  margin-bottom: 0.3rem;
+  color: #4a4a4a;
+}
+
+/* src/index.css or src/App.css */
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+  background-color: #f4f7fa;
+}

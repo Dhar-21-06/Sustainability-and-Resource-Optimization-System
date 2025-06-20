@@ -1,14 +1,18 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const cors = require('cors');
-require('dotenv').config();
+const dotenv = require('dotenv');
+const pirRoutes = require('../motion/routes/Pirroutes'); // adjust path as needed
 
-const pirRoutes = require('./routes/pirRoutes');
-
+dotenv.config();
 const app = express();
-app.use(cors());
-app.use('/api/pir', pirRoutes);
+const PORT = process.env.PORT || 3001;
 
-const PORT = process.env.PORT || 4000;
+app.use(cors());
+app.use(bodyParser.json());
+
+app.use('/api', pirRoutes); // motion endpoint => /api/motion
+
 app.listen(PORT, () => {
-  console.log(`🚀 PIR Backend running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
