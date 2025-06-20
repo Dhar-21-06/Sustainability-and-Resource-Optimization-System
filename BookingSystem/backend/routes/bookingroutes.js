@@ -318,6 +318,27 @@ router.get('/slots/all', async (req, res) => {
   }
 });
 
+// 📌 Get all bookings for a specific lab on a specific date
+router.get('/lab/:lab/:date', async (req, res) => {
+  const { lab, date } = req.params;
+
+  try {
+    const bookings = await Booking.find({ lab, date });
+
+    const booked = bookings
+      .filter(b => b.status === 'Approved')
+      .map(b => ({ time: b.time, status: 'Approved' }));
+
+    const pending = bookings
+      .filter(b => b.status === 'Pending')
+      .map(b => ({ time: b.time, userId: b.userId.toString() }));
+
+    res.json({ booked, pending });
+  } catch (err) {
+    console.error('Error fetching bookings for lab and date:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
 
 
 module.exports = router;

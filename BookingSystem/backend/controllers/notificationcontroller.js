@@ -1,6 +1,7 @@
 const Booking = require('../models/bookings');
 const Slot = require('../models/slot');
 const Notification = require('../models/notification');
+const User = require("../models/user");
 
 /**
  * Notify users if their previously rejected slot is now available
@@ -22,17 +23,32 @@ const notifyUsersAboutAvailableSlots = async () => {
         // Check if slot is available now
         const slot = await Slot.findOne({ lab, date, time });
         if (slot && slot.isAvailable) {
-          // Check if already notified
-          const alreadyNotified = await Notification.findOne({
-            userId,
-            message: { $regex: `Slot ${lab} on ${date} at ${time} is now available` }
-          });
+  // Check if already notified
+  const alreadyNotified = await Notification.findOne({
+    userId,
+    message: { $regex: `Slot ${lab} on ${date} at ${time} is now available` }
+  });
 
-          if (!alreadyNotified) {
-            const message = `The slot you were rejected for (${lab} on ${date} at ${time}) is now available! You can try booking again.`;
-            await Notification.create({ userId, message });
-          }
-        }
+  if (!alreadyNotified) {
+    const message = `The slot you were rejected for (${lab} on ${date} at ${time}) is now available! You can try booking again.`;
+    
+    // Notify faculty user
+    await Notification.create({ userId, message, role: 'faculty' });
+
+    // 📍 Fetch admin user and notify admin
+    const adminUser = await User.findOne({ role: "admin" });
+    if (adminUser) {
+      await Notification.create({
+        userId: adminUser._id,
+        message: `Faculty user with ID ${userId} can now rebook the available slot for ${lab} on ${date} at ${time}.`,
+        role: 'admin'
+      });
+    } else {
+      console.error("Admin user not found");
+    }
+  }
+}
+
       }
     }
 

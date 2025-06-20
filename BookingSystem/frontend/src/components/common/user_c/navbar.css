@@ -66,3 +66,47 @@
 .dropdown-content .edit-profile:hover {
   text-decoration: underline;
 }
+
+.notification-bell {
+  position: relative;
+}
+
+.notification-dropdown {
+  position: absolute;
+  right: 0;
+  top: 50px;
+  background-color: white;
+  width: 300px;        /* ← increase dropdown width */
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  z-index: 50;
+}
+
+.notif-header {
+  padding: 12px;
+  font-weight: bold;
+  color: #003366;
+  border-bottom: 1px solid #ddd;
+}
+
+.notif-item {
+  padding: 12px;
+  color: #333;
+  border-bottom: 1px solid #eee;
+}
+
+.see-all {
+  padding: 12px;
+  color: #0066cc;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  border-top: 1px solid #ddd;
+}
+
+.see-all:hover {
+  background-color: #f0f0f0;
+}
+

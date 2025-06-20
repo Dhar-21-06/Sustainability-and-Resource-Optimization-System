@@ -12,7 +12,6 @@ const PendingRequests = () => {
   const [selectedRejectIndex, setSelectedRejectIndex] = React.useState(null);
   const [confirmationMessage, setConfirmationMessage] = React.useState('');
   const [showConfirmation, setShowConfirmation] = React.useState(false);
-  
 
   const handleApprove = (index) => {
   const updatedRequests = [...requests];
