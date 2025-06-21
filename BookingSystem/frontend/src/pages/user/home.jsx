@@ -3,9 +3,9 @@ import Navbar from '../../components/common/user_c/navbar'
 import Header from '../../components/common/user_c/header';
 import Footer from '../../components/common/user_c/footer';
 import DashboardCard from '../../components/common/user_c/dashboardcard';
-import icon1 from '../../assets/time-icon1.png';
-import icon2 from '../../assets/time-icon2.png';
-import icon3 from '../../assets/time-icon3.png';
+import icon1 from '../../assets/book-icon.png';
+import icon2 from '../../assets/bookings-icon.png';
+import icon3 from '../../assets/event-icon.png';
 import { Link } from 'react-router-dom';
 
 const Home = () => {

@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import DashboardCard from './AdminDashboardCard';
-import icon1 from '../../../assets/time-icon1.png';  // Update icons if needed
-import icon2 from '../../../assets/time-icon2.png';
-import icon3 from '../../../assets/time-icon3.png';
+import icon1 from '../../../assets/pending-icon.png';  // Update icons if needed
+import icon2 from '../../../assets/check-icon.png';
+import icon3 from '../../../assets/event-icon.png';
 
 const AdminDashboard = () => {
   const cardData = [

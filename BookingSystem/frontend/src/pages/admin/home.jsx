@@ -4,9 +4,9 @@ import AdminHeader from '../../components/common/admin_c/AdminHeader';
 import AdminFooter from '../../components/common/admin_c/AdminFooter';
 import AdminDashboardCard from '../../components/common/admin_c/AdminDashboardCard';
 import { Link } from 'react-router-dom';
-import icon1 from '../../assets/time-icon1.png';
-import icon2 from '../../assets/time-icon2.png';
-import icon3 from '../../assets/time-icon3.png';
+import icon1 from '../../assets/pending-icon.png';
+import icon2 from '../../assets/check-icon.png';
+import icon3 from '../../assets/event-icon.png';
 
 
 

@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import DashboardCard from './dashboardcard';
-import icon1 from '../../../assets/time-icon1.png';
-import icon2 from '../../../assets/time-icon2.jpg';
-import icon3 from '../../../assets/time-icon3.jpg';
+import icon1 from '../../../assets/book-icon.png';
+import icon2 from '../../../assets/bookings-icon.png';
+import icon3 from '../../../assets/event-icon.png';
 
 const Dashboard = () => {
   const cardData = [
