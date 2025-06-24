@@ -1,4 +1,5 @@
 import React from 'react';
+import Navbar from '../../components/common/user_c/navbar';
 
 const ViewUpcomingEvents = () => {
   const upcomingEvents = [
@@ -26,6 +27,8 @@ const ViewUpcomingEvents = () => {
   ];
 
   return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
     <div className="p-6">
       <h2 className="text-2xl font-bold mb-6 text-blue-800">Upcoming Events</h2>
       {upcomingEvents.length === 0 ? (
@@ -45,6 +48,7 @@ const ViewUpcomingEvents = () => {
           ))}
         </ul>
       )}
+    </div>
     </div>
   );
 };

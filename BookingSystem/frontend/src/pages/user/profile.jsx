@@ -142,7 +142,7 @@ function Profile() {
 
           {/* Department */}
           <div>
-            <label className="block font-semibold mb-1">Lab Incharge</label>
+            <label className="block font-semibold mb-1">Department</label>
             <select
               name="department"
               value={formData.department}

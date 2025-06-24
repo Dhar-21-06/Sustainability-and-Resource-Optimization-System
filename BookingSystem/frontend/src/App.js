@@ -31,7 +31,7 @@ function App() {
   <Route path="*" element={<div><b>Page Not Found</b></div>} />
   <Route path="faculty/home" element={<Home />} />
   <Route path="/book-a-lab" element={<Book />} />
-  <Route path="/my-bookings" element={<Bookings />} />
+  <Route path="/user/bookings" element={<Bookings />} />
   <Route path="/upcoming-events" element={<Status />} />
   <Route path="/admin/home" element={<AdminHome />} />
   <Route path="/admin/pending-requests" element={<PendingRequests />} />

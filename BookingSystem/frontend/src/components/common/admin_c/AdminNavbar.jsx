@@ -23,7 +23,7 @@ function Navbar() {
   };
 
   const handleEditProfile = () => {
-    navigate('/faculty/profile');
+    navigate('/admin/profile');
   };
 
   const handleBellClick = async () => {
@@ -66,7 +66,13 @@ function Navbar() {
         <div className="notif-item">No notifications</div>
       ) : (
         notifications.slice(0, 1).map((noti, idx) => (
-  <div key={idx} className="notif-item">{noti.message}</div>
+  <div
+    key={idx}
+    className="notif-item cursor-pointer hover:bg-blue-100 transition"
+    onClick={() => navigate(noti.link || '/admin/notifications')}
+  >
+    {noti.message}
+  </div>
 ))
       )}
       <div
@@ -80,7 +86,7 @@ function Navbar() {
 </li>
 
   <li>
-    <Link to="/user/home">Home</Link>
+    <Link to="/admin/home">Home</Link>
   </li>
 
   <li className="dropdown" onClick={toggleDropdown}>

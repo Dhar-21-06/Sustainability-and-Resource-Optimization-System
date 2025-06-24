@@ -1,5 +1,5 @@
 import React from 'react';
-import Navbar from '../../components/common/user_c/navbar'
+import Navbar from '../../components/common/user_c/navbar';
 import Header from '../../components/common/user_c/header';
 import Footer from '../../components/common/user_c/footer';
 import DashboardCard from '../../components/common/user_c/dashboardcard';
@@ -23,7 +23,7 @@ const Home = () => {
   <Link to="/book-a-lab">
     <DashboardCard title="Book a Lab" description="5 Available" icon={icon1} />
   </Link>
-  <Link to="/my-bookings">
+  <Link to="/user/bookings">
     <DashboardCard title="My Bookings" description="2 Booked" icon={icon2} />
   </Link>
   <Link to="/upcoming-events">

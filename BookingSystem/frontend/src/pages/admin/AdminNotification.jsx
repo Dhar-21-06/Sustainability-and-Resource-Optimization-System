@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import AdminNavbar from '../../components/common/admin_c/AdminNavbar';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 function AdminNotification() {
   const [notifications, setNotifications] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -26,19 +29,29 @@ function AdminNotification() {
   }, []);
 
   return (
+    <div className="min-h-screen flex flex-col">
+      <AdminNavbar />
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4 text-blue-800">All Notifications</h1>
       {notifications.length === 0 ? (
         <p className="text-gray-600">No notifications yet.</p>
       ) : (
         <ul className="space-y-4">
-          {notifications.map((noti, idx) => (
-            <li key={idx} className="p-3 border rounded text-gray-800 bg-white shadow">
-              {noti.message}
-            </li>
-          ))}
-        </ul>
+  {notifications.map((noti, idx) => (
+    <li
+      key={idx}
+      className="p-3 border rounded text-gray-800 bg-white shadow cursor-pointer hover:bg-blue-50 transition"
+      onClick={() => {
+        if (noti.link) navigate(noti.link);
+      }}
+
+    >
+      {noti.message}
+    </li>
+  ))}
+</ul>
       )}
+    </div>
     </div>
   );
 }

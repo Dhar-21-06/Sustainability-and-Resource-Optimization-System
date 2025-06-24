@@ -1,77 +1,76 @@
 const express = require('express');
-const Notification = require('../models/notification');
 const router = express.Router();
+const Notification = require('../models/notification');
 
-// 📌 Get notifications for faculty
-router.get('/user/:userId', async (req, res) => {
+// 📥 Get all notifications by user
+router.get('/:userId', async (req, res) => {
   try {
-    const notifications = await Notification.find({ 
-      userId: req.params.userId, 
-      role: 'faculty' 
-    }).sort({ createdAt: -1 });
+    const notifications = await Notification.find({ userId: req.params.userId }).sort({ createdAt: -1 });
     res.json(notifications);
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: 'Error fetching notifications', error: err.message });
   }
 });
 
-// 📌 Get notifications for admin
-router.get('/admin/:userId', async (req, res) => {
+// ✅ Mark notification as read
+router.patch('/read/:id', async (req, res) => {
   try {
-    const notifications = await Notification.find({ 
-      userId: req.params.userId, 
-      role: 'admin' 
-    }).sort({ createdAt: -1 });
-    res.json(notifications);
+    await Notification.findByIdAndUpdate(req.params.id, { read: true });
+    res.json({ message: 'Notification marked as read' });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// 📌 Get all notifications for a user
-// 📌 Mark a notification as read
-router.patch('/:id/read', async (req, res) => {
-  try {
-    const notification = await Notification.findByIdAndUpdate(req.params.id, { read: true }, { new: true });
-    res.json({ message: 'Notification marked as read', notification });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-});
-
-// 📌 Delete a single notification
+// ❌ Delete notification (optional)
 router.delete('/:id', async (req, res) => {
   try {
     await Notification.findByIdAndDelete(req.params.id);
     res.json({ message: 'Notification deleted' });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
-// 📌 Delete all notifications for a user
+// 📌 Get notifications for a specific user (based on their role)
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const notifications = await Notification.find({ userId })
+      .sort({ createdAt: -1 });
+
+    res.json(notifications);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch notifications', error: err.message });
+  }
+});
+
+// 📌 Optional: Delete all notifications for testing/dev
 router.delete('/user/:userId', async (req, res) => {
   try {
     await Notification.deleteMany({ userId: req.params.userId });
-    res.json({ message: 'All notifications for the user deleted' });
+    res.json({ message: 'Notifications cleared for user' });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: 'Failed to clear notifications', error: err.message });
   }
 });
 
-// Send new notification
-router.post('/', async (req, res) => {
-  const { userId, message, role } = req.body;
+// 📌 GET: Admin-specific notifications
+router.get('/admin/:userId', async (req, res) => {
   try {
-    if (!role) {
-      return res.status(400).json({ message: 'Role is required' });
-    }
-    const newNotification = new Notification({ userId, message, role });
-    await newNotification.save();
-    res.status(201).json({ message: 'Notification sent', notification: newNotification });
+    const userId = req.params.userId;
+
+    const notifications = await Notification.find({
+      userId,
+      role: 'admin',
+    }).sort({ createdAt: -1 });
+
+    res.json(notifications);
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: 'Failed to fetch admin notifications', error: err.message });
   }
 });
+
 
 module.exports = router;
