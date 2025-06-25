@@ -1,24 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminNavbar from '../../components/common/admin_c/AdminNavbar';
 import AdminHeader from '../../components/common/admin_c/AdminHeader';
 import AdminFooter from '../../components/common/admin_c/AdminFooter';
 import EventCard from '../../components/common/admin_c/EventCard';
 
 const UpcomingEvents = () => {
-  const events = [
-    {
-      eventName: 'AI Seminar',
-      location: 'Auditorium A',
-      time: '2025-06-15 | 11:00 AM',
-      staffInCharge: 'Dr. Priya Sharma'
-    },
-    {
-      eventName: 'Robotics Workshop',
-      location: 'Lab 2',
-      time: '2025-06-18 | 2:00 PM',
-      staffInCharge: 'Prof. Karthik R'
-    }
-  ];
+  const [events, setEvents] = useState([]);
+
+useEffect(() => {
+  const fetchEvents = async () => {
+    const res = await fetch('http://localhost:5000/api/bookings/upcoming');
+    const data = await res.json();
+
+    const mapped = data.map(item => ({
+      eventName: item.purpose,        // your event name
+      location: item.lab,             // lab is location
+      time: `${item.date} | ${item.time}`,
+      staffInCharge: item.userId?.name || 'N/A'
+    }));
+
+    setEvents(mapped);
+  };
+
+  fetchEvents();
+}, []);
 
   return (
     <div className="min-h-screen flex flex-col">

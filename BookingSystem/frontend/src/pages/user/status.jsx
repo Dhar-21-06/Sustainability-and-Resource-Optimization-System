@@ -1,30 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../../components/common/user_c/navbar';
-
 const ViewUpcomingEvents = () => {
-  const upcomingEvents = [
-    {
-      id: 1,
-      title: 'AI Workshop',
-      location: 'Gen AI Lab',
-      time: '10:00 AM - 12:00 PM',
-      staff: 'Dr. Priya Kumar'
-    },
-    {
-      id: 2,
-      title: 'IoT Hands-on Session',
-      location: 'IoT Lab',
-      time: '01:00 PM - 03:00 PM',
-      staff: 'Mr. Arjun Mehta'
-    },
-    {
-      id: 3,
-      title: 'Cyber Security Seminar',
-      location: 'Security Lab',
-      time: '03:30 PM - 05:00 PM',
-      staff: 'Ms. Neha Sharma'
-    }
-  ];
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+
+useEffect(() => {
+  const fetchEvents = async () => {
+    const res = await fetch('http://localhost:5000/api/bookings/upcoming');
+    const data = await res.json();
+
+    const mapped = data.map(item => ({
+      id: item._id,
+      title: item.purpose,
+      location: item.lab,
+      time: `${item.date} | ${item.time}`,
+      staff: item.userId?.name || 'N/A'
+    }));
+
+    setUpcomingEvents(mapped);
+  };
+
+  fetchEvents();
+}, []);
 
   return (
     <div className="min-h-screen flex flex-col">

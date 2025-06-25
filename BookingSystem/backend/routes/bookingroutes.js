@@ -439,5 +439,18 @@ router.get('/slots/:labName', async (req, res) => {
   }
 });
 
+// 📌 Get all upcoming approved bookings (used for Upcoming Events)
+router.get('/upcoming', async (req, res) => {
+  try {
+    const upcoming = await Booking.find({ status: 'Approved' })
+      .populate('userId', 'name')  // populate user's name
+      .sort({ date: 1, time: 1 });
+
+    res.json(upcoming);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 
 module.exports = router;
