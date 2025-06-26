@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import bgImage from '../../assets/my-profile-bg.jpg';
+import bgImage from '../../assets/bg-4.jpg';
 
 function Profile() {
   const [formData, setFormData] = useState({

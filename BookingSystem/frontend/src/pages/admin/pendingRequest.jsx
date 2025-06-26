@@ -81,15 +81,16 @@ const PendingRequests = () => {
         ) : (
           requests.map((req) => (
             <RequestCard
-              key={req._id}
-              {...req}
-              onApprove={() => {
-                setSelectedApproveRequest(req);
-                setShowApproveConfirmModal(true);
-              }}
+  key={req._id}
+  {...req}
+  facultyName={req.userId?.name}  // 👈 pass faculty name here
+  onApprove={() => {
+    setSelectedApproveRequest(req);
+    setShowApproveConfirmModal(true);
+  }}
+  onReject={() => handleReject(req._id)}
+/>
 
-              onReject={() => handleReject(req._id)}
-            />
           ))
         )}
 

@@ -9,7 +9,6 @@ import icon2 from '../../assets/check-icon.png';
 import icon3 from '../../assets/event-icon.png';
 
 
-
 const AdminHome = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">

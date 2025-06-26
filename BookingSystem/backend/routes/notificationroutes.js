@@ -56,6 +56,17 @@ router.delete('/user/:userId', async (req, res) => {
   }
 });
 
+// for admin
+router.delete('/admin/:userId', async (req, res) => {
+  try {
+    await Notification.deleteMany({ userId: req.params.userId, role: 'admin' });
+    res.json({ message: 'Admin notifications cleared' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to clear admin notifications', error: err.message });
+  }
+});
+
+
 // 📌 GET: Admin-specific notifications
 router.get('/admin/:userId', async (req, res) => {
   try {
@@ -71,6 +82,33 @@ router.get('/admin/:userId', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch admin notifications', error: err.message });
   }
 });
+
+// ✅ Mark all notifications as read for a user
+router.patch('/mark-as-read/:userId', async (req, res) => {
+  try {
+    await Notification.updateMany(
+      { userId: req.params.userId, read: false },
+      { $set: { read: true } }
+    );
+    res.json({ message: 'Notifications marked as read' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// 📊 Get unread notification count for a user
+router.get('/unread-count/:userId', async (req, res) => {
+  try {
+    const count = await Notification.countDocuments({
+      userId: req.params.userId,
+      read: false
+    });
+    res.json({ count });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 
 
 module.exports = router;

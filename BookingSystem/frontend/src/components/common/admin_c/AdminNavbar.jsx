@@ -10,8 +10,29 @@ function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+  const fetchUnreadCount = async () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) return;
+
+    try {
+      const res = await axios.get(`http://localhost:5000/api/notifications/unread-count/${user._id}`);
+      setUnreadCount(res.data.count);
+    } catch (err) {
+      console.error("Failed to fetch unread count", err);
+    }
+  };
+
+  fetchUnreadCount();
+
+  const interval = setInterval(fetchUnreadCount, 5000); // optional refresh every 5s
+  return () => clearInterval(interval);
+}, []);
+
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
@@ -34,6 +55,14 @@ function Navbar() {
     const res = await axios.get(`http://localhost:5000/api/notifications/admin/${userId}`);
     setNotifications(res.data);
     setShowNotifDropdown(!showNotifDropdown);
+
+    // Mark all as read
+    await Promise.all(res.data.map(async (noti) => {
+      if (!noti.read) {
+        await axios.patch(`http://localhost:5000/api/notifications/read/${noti._id}`);
+      }
+    }));
+
   } catch (err) {
     console.error('Failed to fetch admin notifications', err);
   }
@@ -52,11 +81,12 @@ function Navbar() {
   <li className="notification-bell">
     <button onClick={handleBellClick} className="relative p-1 rounded-full hover:bg-gray-200">
       <Bell className="w-6 h-6 text-white" />
-      {notifications.length > 0 && (
-        <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-          {notifications.length}
-        </span>
-      )}
+      {unreadCount > 0 && (
+  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+    {unreadCount}
+  </span>
+)}
+
     </button>
 
     {showNotifDropdown && (

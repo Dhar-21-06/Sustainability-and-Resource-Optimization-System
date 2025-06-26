@@ -12,6 +12,7 @@ const CheckAllocation = () => {
   const [activeTab, setActiveTab] = useState('current');
   const [showRejectedModal, setShowRejectedModal] = useState(false);
   const [rejectionData, setRejectionData] = useState(null);
+  const [showCancelSuccessModal, setShowCancelSuccessModal] = useState(false);
   const currentRef = useRef(null);
   const pendingRef = useRef(null);
   const historyRef = useRef(null);
@@ -64,7 +65,7 @@ useEffect(() => {
   const confirmCancellation = async () => {
     try {
       await axios.patch(`http://localhost:5000/api/bookings/cancel/${selectedBooking.id}`);
-      alert("Booking cancelled");
+      setShowCancelSuccessModal(true);
 
       // Refresh
       const user = JSON.parse(localStorage.getItem("user"));
@@ -309,6 +310,22 @@ useEffect(() => {
           Got it
         </button>
       </div>
+    </div>
+  </div>
+)}
+
+{/* CANCEL SUCCESS MODAL */}
+{showCancelSuccessModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg text-center w-80">
+      <h2 className="text-xl font-bold text-green-700 mb-4">Cancelled</h2>
+      <p className="mb-4 text-gray-700">Your booking has been cancelled.</p>
+      <button
+        onClick={() => setShowCancelSuccessModal(false)}
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        OK
+      </button>
     </div>
   </div>
 )}

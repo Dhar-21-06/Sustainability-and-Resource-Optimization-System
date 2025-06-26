@@ -1,13 +1,13 @@
 import React from 'react';
 
-const RequestCard = ({ lab, date, time, faculty, purpose, onApprove, onReject }) => {
+const RequestCard = ({ lab, date, time, facultyName, purpose, onApprove, onReject }) => {
   return (
     <div className="bg-white rounded-lg shadow p-4 mb-4 flex flex-col md:flex-row md:items-center md:justify-between">
       <div>
         <h3 className="text-lg font-semibold text-blue-800">{lab}</h3>
         <p className="text-gray-600">📅 {date}</p>
         <p className="text-gray-600">🕒 {time}</p>
-        <p className="text-gray-600">👤 {faculty}</p>
+        <p className="text-gray-600">👤 {facultyName}</p>
         {purpose && <p className="text-gray-600">📌 {purpose}</p>}
       </div>
 

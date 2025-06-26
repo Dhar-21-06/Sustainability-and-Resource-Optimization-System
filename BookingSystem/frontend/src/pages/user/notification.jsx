@@ -8,63 +8,83 @@ function Notification() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      const user = JSON.parse(localStorage.getItem('user'));
-      const userId = user?._id;
+  const fetchNotifications = async () => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const userId = user?._id;
 
-      if (!userId) {
-        console.error("User ID not found in localStorage");
-        return;
-      }
+    if (!userId) {
+      console.error("User ID not found in localStorage");
+      return;
+    }
 
-      try {
-        const res = await axios.get(`http://localhost:5000/api/notifications/user/${userId}`);
-        setNotifications(res.data);
-      } catch (err) {
-        console.error('Failed to fetch notifications', err);
-      }
-    };
+    try {
+      const res = await axios.get(`http://localhost:5000/api/notifications/user/${userId}`);
+      setNotifications(res.data);
 
-    fetchNotifications();
-  }, []);
+// ✅ Mark unread notifications as read and locally update their state
+const unreadIds = res.data.filter(n => !n.read).map(n => n._id);
+if (unreadIds.length) {
+  await axios.patch(`http://localhost:5000/api/notifications/mark-as-read/${userId}`);
+  setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+}
+    } catch (err) {
+      console.error('Failed to fetch notifications', err);
+    }
+  };
+
+  fetchNotifications();
+}, []);
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
     <div className="p-6 max-w-3xl mx-auto">
-  <h1 className="text-3xl font-bold mb-6 text-blue-800">Your Notifications</h1>
+  <div className="flex items-center justify-between mb-6">
+  <h1 className="text-3xl font-bold text-blue-800">Your Notifications</h1>
+  <button
+    onClick={async () => {
+      const user = JSON.parse(localStorage.getItem('user'));
+      await axios.delete(`http://localhost:5000/api/notifications/user/${user._id}`);
+      setNotifications([]);
+    }}
+    className="text-sm text-red-600 hover:underline"
+  >
+    Clear All
+  </button>
+</div>
+
   {notifications.length === 0 ? (
     <p className="text-gray-600">No notifications yet.</p>
   ) : (
     <ul className="space-y-4">
   {notifications.map((noti, idx) => (
     <li
-      key={idx}
-      className="p-4 border rounded text-gray-800 bg-white shadow cursor-pointer hover:bg-blue-50 transition"
-      onClick={() => {
-  if (noti.link) {
-    navigate(noti.link);
-    setTimeout(() => {
-      window.dispatchEvent(new HashChangeEvent("hashchange"));
-    }, 0); // manually trigger hashchange for React Router
-  }
-}}
-    >
-      {noti.message}
-      <button
-  onClick={async () => {
-    try {
-      await axios.delete(`http://localhost:5000/api/notifications/${noti._id}`);
-      setNotifications((prev) => prev.filter((n) => n._id !== noti._id));
-    } catch (err) {
-      console.error("Failed to delete notification", err);
+  key={idx}
+  className={`p-4 border rounded text-gray-800 shadow cursor-pointer transition flex justify-between items-center ${
+    !noti.read ? 'bg-blue-100' : 'bg-white'
+  }`}
+  onClick={() => {
+    if (noti.link) {
+      navigate(noti.link);
+      setTimeout(() => {
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+      }, 0);
     }
   }}
-  className="ml-4 text-sm text-red-500 hover:underline"
 >
-  Delete
-</button>
-    </li>
+  <span>{noti.message}</span>
+  <button
+    onClick={async (e) => {
+      e.stopPropagation();
+      await axios.delete(`http://localhost:5000/api/notifications/${noti._id}`);
+      setNotifications((prev) => prev.filter((n) => n._id !== noti._id));
+    }}
+    className="text-red-500 text-lg font-bold ml-3"
+  >
+    ×
+  </button>
+</li>
+
   ))}
 </ul>
   )}

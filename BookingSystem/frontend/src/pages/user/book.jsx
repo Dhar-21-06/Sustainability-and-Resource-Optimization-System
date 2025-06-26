@@ -32,6 +32,7 @@ const Book = () => {
   const [userBookedSlots, setUserBookedSlots] = useState({});
   const [showUserCancelModal, setShowUserCancelModal] = useState(false);
   const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
 
   useEffect(() => {
@@ -150,7 +151,7 @@ const Book = () => {
         time: slotToBook,
         purpose: purposeText,
       });
-      alert("Booking request sent!");
+      setShowSuccessModal(true);
       await refreshBookingData();
       setShowBookModal(false);
       setPurposeText('');
@@ -501,6 +502,21 @@ const Book = () => {
   </div>
 )}
 
+{/* Success Modal */}
+{showSuccessModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg text-center w-80">
+      <h2 className="text-xl font-bold text-green-700 mb-4">Success!</h2>
+      <p className="mb-4 text-gray-700">Your booking request has been sent successfully.</p>
+      <button
+        onClick={() => setShowSuccessModal(false)}
+        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
 
     </div>
     </div>
