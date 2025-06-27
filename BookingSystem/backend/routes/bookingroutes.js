@@ -192,12 +192,12 @@ const rejectedBookings = await Booking.find({
   date: booking.date,
   time: booking.time,
   status: 'Rejected'
-});
+}).populate('userId', 'name');  // ✅ this brings user name along with booking
 
 for (const rejected of rejectedBookings) {
   await Notification.create({
-    userId: rejected.userId,
-    message: `❌ Your booking for ${booking.lab} on ${booking.date} at ${booking.time} was auto-rejected as another request was approved.`,
+    userId: rejected.userId._id,
+    message: `❌ Hi ${rejected.userId.name}, Your booking for ${booking.lab} on ${booking.date} at ${booking.time} was auto-rejected as another request was approved.`,
     role: 'faculty',
     link: '/user/bookings#history'
   });
@@ -231,8 +231,9 @@ router.patch('/reject/:id', async (req, res) => {
     booking.status = 'Rejected';
     booking.rejectionTimestamp = new Date();
     await booking.save();
+    const user = await User.findById(booking.userId);
 
-    const msg = `❌ Your booking for ${booking.lab} on ${booking.date} at ${booking.time} was rejected.\nReason: ${reason}`;
+    const msg = `❌ Hi ${user.name}, Your booking for ${booking.lab} on ${booking.date} at ${booking.time} was rejected.\nReason: ${reason}`;
 
     await Notification.create({
       userId: booking.userId,

@@ -5,12 +5,14 @@ import logo from '../../../assets/cit-chennai-logo.png';
 import { Bell } from 'lucide-react';
 import axios from 'axios';
 import { useEffect } from 'react';
+import LogoutModal from '../../common/LogoutModal';
 
 function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const navigate = useNavigate();
 
@@ -46,6 +48,20 @@ function Navbar() {
   const handleEditProfile = () => {
     navigate('/admin/profile');
   };
+
+  const confirmLogout = () => {
+  localStorage.removeItem('token');
+  navigate('/');
+};
+
+const openLogoutModal = () => {
+  setShowLogoutModal(true);
+};
+
+const closeLogoutModal = () => {
+  setShowLogoutModal(false);
+};
+
 
   const handleBellClick = async () => {
   const user = JSON.parse(localStorage.getItem('user'));
@@ -127,14 +143,20 @@ function Navbar() {
           Edit Profile
         </span>
         <div>&nbsp;</div>
-        <span className="logout-btn" onClick={handleLogout}>
-          Logout
-        </span>
+        <span className="logout-btn" onClick={() => setShowLogoutModal(true)}>
+  Logout
+</span>
       </div>
     )}
   </li>
 
 </ul>
+    <LogoutModal 
+  isOpen={showLogoutModal} 
+  onClose={() => setShowLogoutModal(false)} 
+  onConfirm={confirmLogout} 
+/>
+
     </nav>
   );
 }
