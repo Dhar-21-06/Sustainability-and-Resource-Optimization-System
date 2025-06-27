@@ -33,6 +33,7 @@ const Book = () => {
   const [showUserCancelModal, setShowUserCancelModal] = useState(false);
   const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [hoveredSlot, setHoveredSlot] = useState(null);
 
 
   useEffect(() => {
@@ -307,6 +308,8 @@ const Book = () => {
   const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
   const isSlotExpired = slotDateTime < oneHourLater;
   const isPendingForUser = myPendingSlots[selectedLab._id]?.includes(slot);
+  const rejectionTimestamp = rejectedSlots[selectedLab._id]?.[slot];
+  const isRejected = !!rejectionTimestamp;
   const pendingForOthers = allPendingBookings.some(
     (b) =>
       b.userId !== user._id &&
@@ -314,9 +317,21 @@ const Book = () => {
       b.date === selectedDate &&
       b.time === slot
   );
-  const rejectionTimestamp = rejectedSlots[selectedLab._id]?.[slot];
-  const isRejected = !!rejectionTimestamp;
+  
+    // ⏳ Passed Slot Message Logic
+  let hoverText = "";
+  const isPastAndPending = isSlotExpired && isPendingForUser;
+  const isPastAndAvailable = isSlotExpired && !isBooked && !isRejected && !pendingForOthers;
+  const isPastAndRejected = isSlotExpired && isRejected;
+  const isPastAndApproved = isSlotExpired && isBookedByUser;
 
+  if (isPastAndPending) {
+    hoverText = "Your request of this slot wasn't reviewed by the lab incharge.";
+  } else if (isPastAndAvailable || isPastAndRejected) {
+    hoverText = "This slot booking has been closed.";
+  } else if (isPastAndApproved) {
+    hoverText = "Your slot has successfully completed.";
+  }
   let btnClass = "px-4 py-2 rounded text-sm border transition ";
   let clickHandler = null;
 
@@ -373,20 +388,29 @@ const Book = () => {
   }
 
   return (
-    <button
-      key={i}
-      className={btnClass + (isSlotExpired ? ' opacity-50 cursor-not-allowed' : '')}
-      disabled={(isBooked && !isBookedByUser) || isSlotExpired}
-      onClick={isSlotExpired ? null : clickHandler}
-      onMouseEnter={(e) => {
-        if ((isBooked && !isBookedByUser) || isSlotExpired) e.target.innerText = "🚫";
-      }}
-      onMouseLeave={(e) => {
-        if ((isBooked && !isBookedByUser) || isSlotExpired) e.target.innerText = slot;
-      }}
-    >
-      {slot}
-    </button>
+<div
+  key={i}
+  className={`relative inline-block ${
+    (isSlotExpired || (isBooked && !isBookedByUser)) ? 'custom-blocked-cursor' : ''
+  }`}
+  onMouseEnter={() => setHoveredSlot(`${selectedLab._id}-${slot}`)}
+  onMouseLeave={() => setHoveredSlot(null)}
+>
+  <button
+  className={`${btnClass} ${(isSlotExpired || (isBooked && !isBookedByUser)) ? 'custom-blocked-cursor' : ''} ${isSlotExpired ? 'opacity-50 cursor-not-allowed' : ''}`}
+  disabled={(isBooked && !isBookedByUser) || isSlotExpired}
+  onClick={isSlotExpired ? null : clickHandler}
+>
+  {slot}
+</button>
+
+  {hoveredSlot === `${selectedLab._id}-${slot}` && hoverText && (
+    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 bg-black text-white text-xs px-3 py-1 rounded shadow-lg whitespace-nowrap">
+      {hoverText}
+    </div>
+  )}
+</div>
+
   );
 })}
           </div>
