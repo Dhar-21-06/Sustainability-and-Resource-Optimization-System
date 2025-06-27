@@ -156,7 +156,8 @@ const Book = () => {
       setShowBookModal(false);
       setPurposeText('');
     } catch (err) {
-      alert("Booking failed");
+      console.error("Booking error:", err.response ? err.response.data : err.message);
+      alert(`Booking failed: ${err.response?.data?.message || "Unknown error"}`);
     }
   };
 
@@ -278,18 +279,33 @@ const Book = () => {
         <div className="mt-8 bg-white p-6 rounded shadow-lg">
           <h3 className="text-xl font-bold text-blue-800 mb-2">{selectedLab.name}</h3>
           <p className="mb-2 text-gray-700">{selectedLab.description}</p>
-          {/* 👇 Lab Incharge Details */}
-          <div className="mt-2 text-sm text-gray-500">
-            <p><strong>Incharge:</strong> {selectedLab.incharge?.name}</p>
-            <p><strong>Phone:</strong> {selectedLab.incharge?.phone}</p>
-            <p><strong>Email:</strong> {selectedLab.incharge?.email}</p>
-            </div>
+          {/* 👇 Multiple Incharges Display */}
+          <div className="mt-2 text-sm text-gray-700">
+            <p className="font-semibold text-blue-700">Incharges:</p>
+            {selectedLab.incharge && selectedLab.incharge.length > 0 ? (
+              selectedLab.incharge.map((admin, index) => (
+              <div key={index} className="ml-4 mb-2 border-l pl-3 border-blue-300">
+                <p><strong>Name:</strong> {admin.name}</p>
+                <p><strong>Phone:</strong> {admin.phone}</p>
+                <p><strong>Email:</strong> {admin.email}</p>
+              </div>
+              ))
+            ) : (
+            <p className="ml-4 text-gray-500">No incharges assigned</p>
+            )}
+          </div>
 
           <h4 className="mt-4 font-semibold text-blue-600">Slots:</h4>
           <div className="flex flex-wrap gap-3 mt-3">
             {generateSlots().map((slot, i) => {
   const isBooked = bookedSlots[selectedLab._id]?.includes(slot);
   const isBookedByUser = userBookedSlots[selectedLab._id]?.includes(slot);
+  // ⏰ Check if slot has expired (less than 1 hour left)
+  const [startHour] = slot.split("-")[0].split(":");
+  const slotDateTime = new Date(`${selectedDate}T${String(startHour).padStart(2, '0')}:00:00`);
+  const now = new Date();
+  const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+  const isSlotExpired = slotDateTime < oneHourLater;
   const isPendingForUser = myPendingSlots[selectedLab._id]?.includes(slot);
   const pendingForOthers = allPendingBookings.some(
     (b) =>
@@ -359,14 +375,14 @@ const Book = () => {
   return (
     <button
       key={i}
-      className={btnClass}
-      disabled={isBooked && !isBookedByUser}
-      onClick={clickHandler}
+      className={btnClass + (isSlotExpired ? ' opacity-50 cursor-not-allowed' : '')}
+      disabled={(isBooked && !isBookedByUser) || isSlotExpired}
+      onClick={isSlotExpired ? null : clickHandler}
       onMouseEnter={(e) => {
-        if (isBooked && !isBookedByUser) e.target.innerText = "🚫";
+        if ((isBooked && !isBookedByUser) || isSlotExpired) e.target.innerText = "🚫";
       }}
       onMouseLeave={(e) => {
-        if (isBooked && !isBookedByUser) e.target.innerText = slot;
+        if ((isBooked && !isBookedByUser) || isSlotExpired) e.target.innerText = slot;
       }}
     >
       {slot}

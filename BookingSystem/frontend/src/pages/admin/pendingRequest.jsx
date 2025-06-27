@@ -17,14 +17,25 @@ const PendingRequests = () => {
 
 
   // 🧠 Fetch all pending bookings from backend
-  const fetchPendingRequests = async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/api/bookings/pending');
-      setRequests(res.data);
-    } catch (err) {
-      console.error('Failed to fetch pending requests:', err);
-    }
-  };
+const fetchPendingRequests = async () => {
+  try {
+    // Step 1: Get current user from /me
+    const userRes = await axios.get('http://localhost:5000/api/auth/me', {
+      withCredentials: true
+    });
+    const userEmail = userRes.data.email;
+
+    // Step 2: Send to /pending?adminEmail=...
+    const pendingRes = await axios.get('http://localhost:5000/api/bookings/pending', {
+      params: { adminEmail: userEmail }
+    });
+
+    setRequests(pendingRes.data);
+  } catch (err) {
+    console.error('Failed to fetch pending requests:', err);
+  }
+};
+
 
   useEffect(() => {
     fetchPendingRequests();

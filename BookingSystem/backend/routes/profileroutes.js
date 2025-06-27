@@ -56,26 +56,34 @@ router.post('/save-profile', async (req, res) => {
     }
 
     if (role.toLowerCase() === 'admin' && labIncharge) {
+      // Remove admin from any other lab where they were incharge
+      await Lab.updateMany(
+        { "incharge.email": email, name: { $ne: labIncharge } },
+        { $pull: { incharge: { email } } }
+      );
+      
+      // Add to selected lab (if not already present)
       const updatedLab = await Lab.findOneAndUpdate(
         { name: labIncharge },
         {
-          incharge: {
-            name: `${firstName} ${lastName}`,
-            email,
-            phone: phoneNumber
+          $addToSet: {
+            incharge: {
+              name: `${firstName} ${lastName}`,
+              email,
+              phone: phoneNumber
+            }
           }
         },
         { new: true }
       );
-
-      console.log('Lab updated:', updatedLab);
+      console.log('Lab updated with multiple incharges:', updatedLab);
     }
+
 
     res.status(200).json({ message: 'Profile saved successfully', profile });
 
   } catch (error) {
-    console.error('❌ Error saving profile:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('❌ Error saving profile:', error.stack || error);
   }
 });
 

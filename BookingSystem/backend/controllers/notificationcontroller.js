@@ -2,6 +2,7 @@ const Booking = require('../models/bookings');
 const Slot = require('../models/slot');
 const Notification = require('../models/notification');
 const User = require("../models/user");
+const Profile = require("../models/profile"); 
 
 /**
  * Notify users if their previously rejected slot is now available
@@ -35,18 +36,22 @@ const notifyUsersAboutAvailableSlots = async () => {
     // Notify faculty user
     await Notification.create({ userId, message, role: 'faculty' });
 
-    // 📍 Fetch admin user and notify admin
-    const adminUser = await User.findOne({ role: "admin" });
-    if (adminUser) {
-      await Notification.create({
-        userId: adminUser._id,
-        message: `Faculty user with ID ${userId} can now rebook the available slot for ${lab} on ${date} at ${time}.`,
-        role: 'admin'
-      });
-    } else {
+const adminProfiles = await Profile.find({ role: "admin", labIncharge: lab });
+
+for (const profile of adminProfiles) {
+  const adminUser = await User.findOne({ email: profile.email });
+  if (adminUser) {
+    await Notification.create({
+      userId: adminUser._id,
+      message: `Faculty user with ID ${userId} can now rebook the available slot for ${lab} on ${date} at ${time}.`,
+      role: 'admin'
+    });
+  }
+ else {
       console.error("Admin user not found");
     }
   }
+}
 }
 
       }

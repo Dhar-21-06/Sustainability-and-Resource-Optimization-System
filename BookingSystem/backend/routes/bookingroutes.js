@@ -5,8 +5,8 @@ const router = express.Router();
 const { notifyUsersAboutAvailableSlots, deleteOldNotifications } = require('../controllers/notificationcontroller');
 const User = require('../models/user');
 const Notification = require('../models/notification');
+const Profile = require('../models/profile'); // ⬅ Add at the top if not already
 
-// 📌 User requests a slot
 // 📌 User requests a slot
 router.post('/request', async (req, res) => {
   const { userId, lab, date, time, purpose } = req.body;
@@ -69,20 +69,33 @@ router.post('/request', async (req, res) => {
 
     // ✅ Notification to Admins
     const user = await User.findById(userId);
-    const admins = await User.find({ role: 'admin' });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    console.log("✅ Matching admin profiles for lab:", lab);
+    const labName = lab.trim().toLowerCase();
+    const profiles = await Profile.find({ role: 'admin', labIncharge: { $regex: new RegExp(`^${labName}$`, 'i') } });
+    console.log("✅ Matched profiles:", profiles.map(p => p.email));
+    console.log("📌 User data:", user);
 
     const msg = `${user.name} has requested a booking for ${lab} on ${date} at ${time}. Purpose: ${purpose}`;
 
-    for (const admin of admins) {
-      await Notification.create({
-        userId: admin._id,
-        message: msg,
-        role: 'admin',
-        link: '/admin/pending-requests'
-      });
+
+    for (const profile of profiles) {
+      const admin = await User.findOne({ email: profile.email });
+      if (admin) {
+        await Notification.create({
+          userId: admin._id,
+          message: msg,
+          role: 'admin',
+          link: '/admin/pending-requests'
+        });
+        console.log(`📨 Sending notification to ${profile.email}`);
+      }
     }
 
-    res.status(201).json({ message: 'Booking request submitted', booking: newBooking });
+    res.status(200).json({ message: 'Booking request submitted', booking: newBooking });
 
   } catch (err) {
     console.error("❌ Error in /request:", err);
@@ -105,16 +118,22 @@ router.patch('/cancel/:id', async (req, res) => {
 
     // ✅ Only notify admins if it was previously Approved
     if (booking.status === 'Approved') {
-      const admins = await User.find({ role: 'admin' });
-      const msg = `${user.name} has cancelled their approved booking for ${booking.lab} on ${booking.date} at ${booking.time}.`;
+      console.log("✅ Matching admin profiles for lab:", lab);
+      const labName = lab.trim().toLowerCase();
+    const profiles = await Profile.find({ role: 'admin', labIncharge: { $regex: new RegExp(`^${labName}$`, 'i') } });
+    console.log("✅ Matched profiles:", profiles.map(p => p.email));
+    const msg = `${user.name} has cancelled their approved booking for ${booking.lab} on ${booking.date} at ${booking.time}.`;
 
-      for (const admin of admins) {
-        await Notification.create({
-          userId: admin._id,
-          message: msg,
-          role: 'admin',
-          link: ''
-        });
+      for (const profile of profiles) {
+        const admin = await User.findOne({ email: profile.email });
+        if (admin) {
+          await Notification.create({
+            userId: admin._id,
+            message: msg,
+            role: 'admin',
+            link: ''
+          });
+        }
       }
     }
 
@@ -230,13 +249,38 @@ router.patch('/reject/:id', async (req, res) => {
 
 // 📌 Get all pending bookings (for Admin)
 router.get('/pending', async (req, res) => {
+  const { adminEmail } = req.query;
+
   try {
-    const pendingBookings = await Booking.find({ status: 'Pending' }).populate('userId', 'name email').sort({ requestedAt: -1 });
+    if (!adminEmail) {
+      return res.status(400).json({ message: 'Admin email is required' });
+    }
+
+    const adminProfile = await Profile.findOne({ email: adminEmail, role: 'admin' });
+    if (!adminProfile) {
+      return res.status(404).json({ message: 'Admin profile not found' });
+    }
+
+    const labIncharge = adminProfile.labIncharge;
+    if (!labIncharge) {
+      return res.status(400).json({ message: 'Admin is not in charge of any lab' });
+    }
+
+    // 🔐 Get only pending requests for this lab
+    const pendingBookings = await Booking.find({
+      status: 'Pending',
+      lab: labIncharge
+    })
+      .populate('userId', 'name email')
+      .sort({ requestedAt: -1 });
+
     res.json(pendingBookings);
   } catch (err) {
+    console.error("❌ Error in /pending:", err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
 
 // ✅ 📌 Get all approved bookings (for Admin dashboard or calendar)
 router.get('/approved', async (req, res) => {
