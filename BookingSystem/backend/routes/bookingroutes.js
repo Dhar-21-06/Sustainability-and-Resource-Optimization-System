@@ -254,7 +254,7 @@ router.patch('/reject/:id', async (req, res) => {
   }
 });
 
-// 📌 Get all pending bookings (for Admin)
+// 📌 Get only valid future pending bookings (delete expired pending)
 router.get('/pending', async (req, res) => {
   const { adminEmail } = req.query;
 
@@ -273,15 +273,35 @@ router.get('/pending', async (req, res) => {
       return res.status(400).json({ message: 'Admin is not in charge of any lab' });
     }
 
-    // 🔐 Get only pending requests for this lab
-    const pendingBookings = await Booking.find({
+    const allPending = await Booking.find({
       status: 'Pending',
       lab: labIncharge
-    })
-      .populate('userId', 'name email')
-      .sort({ requestedAt: -1 });
+    });
 
-    res.json(pendingBookings);
+    const now = new Date();
+    const validPending = [];
+
+    for (const booking of allPending) {
+      const [startHour] = booking.time.split(':'); // "10:00-11:00" → "10"
+      const slotTime = new Date(`${booking.date}T${startHour.padStart(2, '0')}:00:00`);
+
+      const approvalDeadline = new Date(slotTime.getTime() - 30 * 60 * 1000); // 30 mins before slot
+
+      if (now > approvalDeadline) {
+        // ⛔️ Delete expired pending booking
+        await Booking.deleteOne({ _id: booking._id });
+      } else {
+        // ✅ Add to valid pending list
+        validPending.push(booking);
+      }
+    }
+
+    // Populate user details and sort by request time
+    const populated = await Booking.populate(validPending, { path: 'userId', select: 'name email' });
+
+    populated.sort((a, b) => new Date(b.requestedAt) - new Date(a.requestedAt));
+
+    res.json(populated);
   } catch (err) {
     console.error("❌ Error in /pending:", err);
     res.status(500).json({ message: 'Server error', error: err.message });
