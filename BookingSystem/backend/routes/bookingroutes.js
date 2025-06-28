@@ -104,8 +104,6 @@ router.post('/request', async (req, res) => {
 });
 
 
-
-// 📌 Cancel a booking (user)
 // 📌 Cancel a booking (user)
 router.patch('/cancel/:id', async (req, res) => {
   const bookingId = req.params.id;
@@ -118,11 +116,17 @@ router.patch('/cancel/:id', async (req, res) => {
 
     // ✅ Only notify admins if it was previously Approved
     if (booking.status === 'Approved') {
-      console.log("✅ Matching admin profiles for lab:", lab);
-      const labName = lab.trim().toLowerCase();
-    const profiles = await Profile.find({ role: 'admin', labIncharge: { $regex: new RegExp(`^${labName}$`, 'i') } });
-    console.log("✅ Matched profiles:", profiles.map(p => p.email));
-    const msg = `${user.name} has cancelled their approved booking for ${booking.lab} on ${booking.date} at ${booking.time}.`;
+      const labName = booking.lab.trim().toLowerCase(); // ✅ Fix: use booking.lab
+      console.log("✅ Matching admin profiles for lab:", labName);
+
+      const profiles = await Profile.find({
+        role: 'admin',
+        labIncharge: { $regex: new RegExp(`^${labName}$`, 'i') }
+      });
+
+      console.log("✅ Matched profiles:", profiles.map(p => p.email));
+
+      const msg = `${user.name} has cancelled their approved booking for ${booking.lab} on ${booking.date} at ${booking.time}.`;
 
       for (const profile of profiles) {
         const admin = await User.findOne({ email: profile.email });
@@ -137,7 +141,7 @@ router.patch('/cancel/:id', async (req, res) => {
       }
     }
 
-    // Free the slot
+    // ✅ Free the slot
     await Slot.findOneAndUpdate(
       { lab: booking.lab, date: booking.date, time: booking.time },
       { isAvailable: true },
@@ -149,9 +153,11 @@ router.patch('/cancel/:id', async (req, res) => {
 
     res.json({ message: 'Booking cancelled and slot released' });
   } catch (err) {
+    console.error("❌ Cancel booking error:", err); // ✅ add for debugging
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
 
 // 📌 Admin approves booking
 router.patch('/approve/:id', async (req, res) => {

@@ -162,7 +162,7 @@ const Book = () => {
     }
   };
 
-  const handleUserConfirmedCancel = async () => {
+const handleUserConfirmedCancel = async () => {
   try {
     const res = await axios.get(`http://localhost:5000/api/bookings/user/${user._id}`);
     const match = res.data.find(
@@ -178,27 +178,9 @@ const Book = () => {
     alert("Booking cancelled. Admin will be notified.");
     setShowConfirmCancelModal(false);
     setSlotToBook(null);
-    
-    // Refresh bookings after cancellation
-    const refreshBookingData = async () => {
-  if (!selectedLab || !selectedDate || !user) return;
-  try {
-    const res = await axios.get(`http://localhost:5000/api/bookings/lab/${selectedLab.name}/${selectedDate}`);
-    const booked = res.data.booked || [];
-    const pending = res.data.pending || [];
 
-    const userBooked = booked.filter(b => String(b.userId) === String(user._id)).map(b => b.time);
-    const userPending = pending.filter(b => String(b.userId) === String(user._id)).map(b => b.time);
+    await refreshBookingData(); // ✅ Refresh UI data after cancellation
 
-    setBookedSlots(prev => ({ ...prev, [selectedLab._id]: booked.map(b => b.time) }));
-    setUserBookedSlots(prev => ({ ...prev, [selectedLab._id]: userBooked }));
-    setMyPendingSlots(prev => ({ ...prev, [selectedLab._id]: userPending }));
-    setAllPendingBookings(pending);
-  } catch (err) {
-    console.error("❌ Failed to refresh bookings", err);
-  }
-};
-    console.log("🎯 User Booked Slots:", userBookedSlots);
   } catch (err) {
     console.error("Cancellation failed", err);
     alert("Failed to cancel booking.");
@@ -219,6 +201,7 @@ const Book = () => {
       } else {
         alert("No matching booking found");
       }
+      await refreshBookingData()
     } catch (err) {
       alert("Failed to cancel pending booking");
     }
@@ -299,120 +282,117 @@ const Book = () => {
           <h4 className="mt-4 font-semibold text-blue-600">Slots:</h4>
           <div className="flex flex-wrap gap-3 mt-3">
             {generateSlots().map((slot, i) => {
-  const isBooked = bookedSlots[selectedLab._id]?.includes(slot);
-  const isBookedByUser = userBookedSlots[selectedLab._id]?.includes(slot);
-  // ⏰ Check if slot has expired (less than 1 hour left)
-  const [startHour] = slot.split("-")[0].split(":");
-  const slotDateTime = new Date(`${selectedDate}T${String(startHour).padStart(2, '0')}:00:00`);
-  const now = new Date();
-  const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-  const isSlotExpired = slotDateTime < oneHourLater;
-  const isPendingForUser = myPendingSlots[selectedLab._id]?.includes(slot);
-  const rejectionTimestamp = rejectedSlots[selectedLab._id]?.[slot];
-  const isRejected = !!rejectionTimestamp;
-  const pendingForOthers = allPendingBookings.some(
-    (b) =>
-      b.userId !== user._id &&
-      b.lab === selectedLab.name &&
-      b.date === selectedDate &&
-      b.time === slot
-  );
-  
-    // ⏳ Passed Slot Message Logic
-  let hoverText = "";
-  const isPastAndPending = isSlotExpired && isPendingForUser;
-  const isPastAndAvailable = isSlotExpired && !isBooked && !isRejected && !pendingForOthers;
-  const isPastAndRejected = isSlotExpired && isRejected;
-  const isPastAndApproved = isSlotExpired && isBookedByUser;
+              const isBooked = bookedSlots[selectedLab._id]?.includes(slot);
+              const isBookedByUser = userBookedSlots[selectedLab._id]?.includes(slot);
 
-  if (isPastAndPending) {
-    hoverText = "Your request of this slot wasn't reviewed by the lab incharge.";
-  } else if (isPastAndAvailable || isPastAndRejected) {
-    hoverText = "This slot booking has been closed.";
-  } else if (isPastAndApproved) {
-    hoverText = "Your slot has successfully completed.";
-  }
-  let btnClass = "px-4 py-2 rounded text-sm border transition ";
-  let clickHandler = null;
+              // ⏰ Updated: Precise slot start time logic
+              const [startHour] = slot.split("-")[0].split(":");
+              const slotStart = new Date(`${selectedDate}T${String(startHour).padStart(2, '0')}:00:00`);
+              const now = new Date();
+              const isSlotStarted = now >= slotStart; // ⏳ slot time has arrived or passed
+              const isCancelAllowed = isBooked && isBookedByUser && !isSlotStarted;
 
-  // ✅ 1. Pending (Yellow) for Current User — show FIRST
-  if (isPendingForUser) {
-    btnClass += "bg-yellow-100 text-yellow-800 border-yellow-300 hover:border-yellow-500";
-    clickHandler = () => {
-      setSlotToBook(slot);
-      setShowPendingModal(true);
-    };
+              // Only block others' slots or expired ones — allow own bookings till last minute
+              const isSlotExpired = !isCancelAllowed && slotStart < new Date(now.getTime() + 60 * 60 * 1000);
+              const isPendingForUser = myPendingSlots[selectedLab._id]?.includes(slot);
+              const rejectionTimestamp = rejectedSlots[selectedLab._id]?.[slot];
+              const isRejected = !!rejectionTimestamp;
+              
+              const pendingForOthers = allPendingBookings.some(
+                (b) =>
+                  b.userId !== user._id &&
+                  b.lab === selectedLab.name &&
+                  b.date === selectedDate &&
+                  b.time === slot
+              );
 
-  // ✅ 2. Approved Booking by YOU
-  } else if (isBooked && isBookedByUser) {
-    btnClass += "bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer";
-    clickHandler = () => {
-      setSlotToBook(slot);
-      setShowUserCancelModal(true);
-    };
+              // 🎯 Hover Message Logic
+              let hoverText = "";
+              const isPastAndPending = isSlotStarted && isPendingForUser;
+              const isPastAndAvailable = isSlotStarted && !isBooked && !isRejected && !pendingForOthers;
+              const isPastAndRejected = isSlotStarted && isRejected;
+              const isPastAndApproved = isSlotStarted && isBookedByUser;
 
-  // ✅ 3. Booked by Others (gray/🚫)
-  } else if (isBooked) {
-    btnClass += "bg-gray-200 text-gray-400 cursor-not-allowed";
+              if (isPastAndPending) {
+                hoverText = "Your request of this slot wasn't reviewed by the lab incharge.";
+              } else if (isPastAndAvailable || isPastAndRejected) {
+                hoverText = "This slot booking has been closed.";
+              } else if (isPastAndApproved) {
+                hoverText = "Your slot has successfully completed.";
+              }
 
-  // ✅ 4. Rejected (Red)
-  } else if (isRejected) {
-    btnClass += "bg-red-200 text-red-800 border-red-300 cursor-pointer hover:border-red-500";
-    clickHandler = () => {
-      const now = new Date();
-      const rejectionTime = new Date(rejectionTimestamp);
-      const cooldownUntil = new Date(rejectionTime.getTime() + 24 * 60 * 60 * 1000);
-      const diffMs = cooldownUntil - now;
-      const hours = Math.floor(diffMs / (1000 * 60 * 60));
-      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      setCooldownMessage(`${hours}h ${minutes}m remaining`);
-      setSlotToBook(slot);
-      setShowRejectedModal(true);
-    };
+              // 🧩 Style + Handler Setup
+              let btnClass = "px-4 py-2 rounded text-sm border transition ";
+              let clickHandler = null;
 
-  // ✅ 5. Pending by Others (greenish warning)
-  } else if (pendingForOthers) {
-    btnClass += "bg-green-100 text-yellow-900 border-yellow-300 hover:border-yellow-500 cursor-pointer";
-    clickHandler = () => {
-      setSlotToBook(slot);
-      setShowWarningModal(true);
-    };
+              if (isPendingForUser) {
+                btnClass += "bg-yellow-100 text-yellow-800 border-yellow-300 hover:border-yellow-500";
+                clickHandler = () => {
+                  setSlotToBook(slot);
+                  setShowPendingModal(true);
+                };
+              } else if (isBooked && isBookedByUser) {
+                btnClass += "bg-blue-100 text-blue-800 hover:bg-blue-200 cursor-pointer";
+                clickHandler = () => {
+                  setSlotToBook(slot);
+                  setShowUserCancelModal(true);
+                };
+              } else if (isBooked) {
+                btnClass += "bg-gray-200 text-gray-400 cursor-not-allowed";
+              } else if (isRejected) {
+                btnClass += "bg-red-200 text-red-800 border-red-300 cursor-pointer hover:border-red-500";
+                clickHandler = () => {
+                  const now = new Date();
+                  const rejectionTime = new Date(rejectionTimestamp);
+                  const cooldownUntil = new Date(rejectionTime.getTime() + 24 * 60 * 60 * 1000);
+                  const diffMs = cooldownUntil - now;
+                  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                  setCooldownMessage(`${hours}h ${minutes}m remaining`);
+                  setSlotToBook(slot);
+                  setShowRejectedModal(true);
+                };
+              } else if (pendingForOthers) {
+                btnClass += "bg-green-100 text-yellow-900 border-yellow-300 hover:border-yellow-500 cursor-pointer";
+                clickHandler = () => {
+                  setSlotToBook(slot);
+                  setShowWarningModal(true);
+                };
+              } else {
+                btnClass += "bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer";
+                clickHandler = () => {
+                  setSlotToBook(slot);
+                  setShowBookModal(true);
+                };
+              }
 
-  // ✅ 6. Fully Available (Green)
-  } else {
-    btnClass += "bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer";
-    clickHandler = () => {
-      setSlotToBook(slot);
-      setShowBookModal(true);
-    };
-  }
+              return (
+                <div
+                  key={i}
+                  className={`relative inline-block ${
+                    (isSlotExpired || (isBooked && !isBookedByUser)) ? 'custom-blocked-cursor' : ''
+                  }`}
+                  onMouseEnter={() => setHoveredSlot(`${selectedLab._id}-${slot}`)}
+                  onMouseLeave={() => setHoveredSlot(null)}
+                >
+                  <button
+                    className={`${btnClass} ${
+                      (isSlotExpired || (isBooked && !isBookedByUser)) ? 'custom-blocked-cursor' : ''
+                    } ${(!isCancelAllowed && isSlotExpired) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={(isBooked && !isBookedByUser) || (!isCancelAllowed && isSlotExpired)}
+                    onClick={(!isCancelAllowed && isSlotExpired) ? null : clickHandler}
+                  >
+                    {slot}
+                  </button>
 
-  return (
-<div
-  key={i}
-  className={`relative inline-block ${
-    (isSlotExpired || (isBooked && !isBookedByUser)) ? 'custom-blocked-cursor' : ''
-  }`}
-  onMouseEnter={() => setHoveredSlot(`${selectedLab._id}-${slot}`)}
-  onMouseLeave={() => setHoveredSlot(null)}
->
-  <button
-  className={`${btnClass} ${(isSlotExpired || (isBooked && !isBookedByUser)) ? 'custom-blocked-cursor' : ''} ${isSlotExpired ? 'opacity-50 cursor-not-allowed' : ''}`}
-  disabled={(isBooked && !isBookedByUser) || isSlotExpired}
-  onClick={isSlotExpired ? null : clickHandler}
->
-  {slot}
-</button>
-
-  {hoveredSlot === `${selectedLab._id}-${slot}` && hoverText && (
-    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 bg-black text-white text-xs px-3 py-1 rounded shadow-lg whitespace-nowrap">
-      {hoverText}
-    </div>
-  )}
-</div>
-
-  );
-})}
+                  {hoveredSlot === `${selectedLab._id}-${slot}` && hoverText && (
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 bg-black text-white text-xs px-3 py-1 rounded shadow-lg whitespace-nowrap">
+                      {hoverText}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

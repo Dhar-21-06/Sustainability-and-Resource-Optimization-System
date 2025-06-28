@@ -12,7 +12,7 @@ function Notification() {
   setNotifications([]);
 };
 
-  useEffect(() => {
+useEffect(() => {
   const fetchNotifications = async () => {
     const user = JSON.parse(localStorage.getItem('user'));
     const userId = user?._id;
@@ -26,19 +26,33 @@ function Notification() {
       const res = await axios.get(`http://localhost:5000/api/notifications/user/${userId}`);
       setNotifications(res.data);
 
-// ✅ Mark unread notifications as read and locally update their state
-const unreadIds = res.data.filter(n => !n.read).map(n => n._id);
-if (unreadIds.length) {
-  await axios.patch(`http://localhost:5000/api/notifications/mark-as-read/${userId}`);
-  setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-}
+      // ✅ Mark unread notifications as read and locally update their state
+      const unreadIds = res.data.filter(n => !n.read).map(n => n._id);
+      if (unreadIds.length) {
+        await axios.patch(`http://localhost:5000/api/notifications/mark-as-read/${userId}`);
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      }
     } catch (err) {
       console.error('Failed to fetch notifications', err);
     }
   };
 
   fetchNotifications();
+
+  // ✅ Start polling for 30-min slot alerts
+  const interval = setInterval(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user?.role !== 'faculty') return;
+    axios.get('http://localhost:5000/api/notifications/pre-slot-alerts')
+      .then(res => console.log("⏰ Slot alert check done"))
+      .catch(err => console.error("⛔ Slot alert error", err));
+  }, 60000); // every 60 seconds
+
+  // ✅ Clear interval on unmount
+  return () => clearInterval(interval);
+
 }, []);
+
 
   return (
     <div className="min-h-screen flex flex-col">

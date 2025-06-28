@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Notification = require('../models/notification');
+const { notifyUsersBeforeSlot } = require('../controllers/notificationcontroller');
 
 // 📥 Get all notifications by user
 router.get('/:userId', async (req, res) => {
@@ -109,6 +110,15 @@ router.get('/unread-count/:userId', async (req, res) => {
   }
 });
 
+// ⏰ Route to check if any user needs to be notified before slot
+router.get('/pre-slot-alerts', async (req, res) => {
+  try {
+    const result = await notifyUsersBeforeSlot();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 
 module.exports = router;

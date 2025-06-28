@@ -80,4 +80,52 @@ const deleteOldNotifications = async () => {
   }
 };
 
-module.exports = { notifyUsersAboutAvailableSlots, deleteOldNotifications };
+/**
+ * Notify users 30 minutes before their approved booking starts
+ */
+const notifyUsersBeforeSlot = async () => {
+  try {
+    const now = new Date();
+    const in30Min = new Date(now.getTime() + 30 * 60000); // 30 minutes from now
+
+    const bookings = await Booking.find({
+      status: 'Approved'
+    }).populate('userId', 'name');
+
+    for (const booking of bookings) {
+      const slotTime = new Date(`${booking.date}T${booking.time}`);
+      
+      // Check if slot is ~30 minutes from now (±1 minute buffer)
+      const diff = Math.abs(slotTime - in30Min) / 1000 / 60; // difference in minutes
+
+      if (diff <= 1) {
+        // Check if notification already sent
+        const existing = await Notification.findOne({
+          userId: booking.userId._id,
+          message: {
+            $regex: `booking at ${booking.lab} on ${booking.date} at ${booking.time} begins in 30 minutes`,
+            $options: 'i'
+          }
+        });
+
+        if (!existing) {
+          const msg = `🔔 Hi ${booking.userId.name}, Your lab booking at ${booking.lab} on ${booking.date} at ${booking.time} begins in 30 minutes.`;
+
+          await Notification.create({
+            userId: booking.userId._id,
+            message: msg,
+            role: 'faculty',
+            link: '/user/bookings#current'
+          });
+        }
+      }
+    }
+
+    return { success: true, message: 'Pre-slot notifications sent' };
+  } catch (err) {
+    console.error("❌ Error in notifyUsersBeforeSlot:", err.message);
+    throw new Error("Failed to notify users before their slot");
+  }
+};
+
+module.exports = { notifyUsersAboutAvailableSlots, deleteOldNotifications, notifyUsersBeforeSlot };
