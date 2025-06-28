@@ -13,6 +13,8 @@ const CheckAllocation = () => {
   const [showRejectedModal, setShowRejectedModal] = useState(false);
   const [rejectionData, setRejectionData] = useState(null);
   const [showCancelSuccessModal, setShowCancelSuccessModal] = useState(false);
+  const [highlightBookingId, setHighlightBookingId] = useState(null);
+  const [urlHighlightId, setUrlHighlightId] = useState(null);
   const currentRef = useRef(null);
   const pendingRef = useRef(null);
   const historyRef = useRef(null);
@@ -37,7 +39,7 @@ const CheckAllocation = () => {
 
         const withStatus = bookingsFromDB.map((b) => ({
           ...b,
-          id: b._id, // for frontend key rendering
+          id: b._id.toString(), // for frontend key rendering
         }));
 
         setBookings(withStatus);
@@ -54,7 +56,18 @@ useEffect(() => {
   if (['current', 'pending', 'history'].includes(hash)) {
     setActiveTab(hash);
   }
-}, [location.key]); // this is the key difference
+
+  const searchParams = new URLSearchParams(location.search);
+  const bookingId = searchParams.get("highlight");
+
+  if (bookingId) {
+    setHighlightBookingId(bookingId);
+    // Clear after 5 seconds
+    const timer = setTimeout(() => setHighlightBookingId(null), 5000);
+    return () => clearTimeout(timer);
+  }
+}, [location.search]);
+ // this is the key difference
 
 
   const handleCancelClick = (booking) => {
@@ -70,7 +83,7 @@ useEffect(() => {
       // Refresh
       const user = JSON.parse(localStorage.getItem("user"));
       const res = await axios.get(`http://localhost:5000/api/bookings/user/${user._id}`);
-      const refreshed = res.data.map(b => ({ ...b, id: b._id }));
+      const refreshed = res.data.map(b => ({ ...b, id: b._id.toString() }));
       setBookings(refreshed);
 
       setShowModal(false);
@@ -180,7 +193,8 @@ useEffect(() => {
         ) : (
           <ul className="space-y-4">
             {currentBookings.map((booking) => (
-              <li key={booking.id} className="p-4 border rounded-xl bg-white flex justify-between items-center">
+              <li key={booking.id} className={`p-4 border rounded-xl flex justify-between items-center transition-all duration-500
+  ${highlightBookingId === booking.id ? 'bg-blue-100' : 'bg-white'}`}>
                 <div>
                   <p className="text-green-700 font-semibold">{booking.lab}</p>
                   <p className="text-sm text-gray-600">{booking.time} | {booking.date}</p>
@@ -207,7 +221,11 @@ useEffect(() => {
         ) : (
           <ul className="space-y-4">
             {pendingRequests.map((booking) => (
-              <li key={booking.id} className="p-4 border rounded-xl bg-white flex justify-between items-center">
+              <li
+  key={booking.id}
+  className={`p-4 border rounded-xl flex justify-between items-center transition-all duration-500
+    ${highlightBookingId === booking.id ? 'bg-blue-100' : 'bg-white'}`}
+>
                 <div>
                   <p className="text-blue-700 font-semibold">{booking.lab}</p>
                   <p className="text-sm text-gray-600">{booking.time} | {booking.date}</p>
@@ -234,7 +252,11 @@ useEffect(() => {
         ) : (
           <ul className="space-y-4">
             {bookingHistory.map((booking) => (
-              <li key={booking.id} className="p-4 border rounded-xl bg-white">
+              <li
+  key={booking.id}
+  className={`p-4 border rounded-xl flex justify-between items-center transition-all duration-500
+    ${highlightBookingId === booking.id ? 'bg-blue-100' : 'bg-white'}`}
+>
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-semibold text-gray-800">{booking.lab}</p>

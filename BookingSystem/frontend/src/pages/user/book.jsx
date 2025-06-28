@@ -34,7 +34,7 @@ const Book = () => {
   const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [hoveredSlot, setHoveredSlot] = useState(null);
-
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     const fetchLabs = async () => {
@@ -152,7 +152,8 @@ const Book = () => {
         time: slotToBook,
         purpose: purposeText,
       });
-      setShowSuccessModal(true);
+      setSuccessMessage("Your booking request has been sent successfully.");
+setShowSuccessModal(true);
       await refreshBookingData();
       setShowBookModal(false);
       setPurposeText('');
@@ -170,23 +171,29 @@ const handleUserConfirmedCancel = async () => {
     );
 
     if (!match) {
-      alert("Matching approved booking not found.");
+      // Show a custom message modal instead of alert
+      setCooldownMessage("No matching approved booking found.");
+      setShowRejectedModal(true);
+      setShowConfirmCancelModal(false);
       return;
     }
 
     await axios.patch(`http://localhost:5000/api/bookings/cancel/${match._id}`);
-    alert("Booking cancelled. Admin will be notified.");
+    setSuccessMessage("Your booking was cancelled successfully.");
+setShowSuccessModal(true);
+    
+    // Show success modal
     setShowConfirmCancelModal(false);
     setSlotToBook(null);
 
-    await refreshBookingData(); // ✅ Refresh UI data after cancellation
-
+    await refreshBookingData();
   } catch (err) {
     console.error("Cancellation failed", err);
-    alert("Failed to cancel booking.");
+    setCooldownMessage("Failed to cancel booking.");
+    setShowRejectedModal(true);
+    setShowConfirmCancelModal(false);
   }
 };
-
 
   const handleCancelPending = async () => {
     try {
@@ -195,12 +202,17 @@ const handleUserConfirmedCancel = async () => {
         b => b.lab === selectedLab.name && b.date === selectedDate && b.time === slotToBook && b.status === 'Pending'
       );
       if (match) {
-        await axios.patch(`http://localhost:5000/api/bookings/cancel/${match._id}`);
-        alert("Pending request cancelled");
-        setShowPendingModal(false);
-      } else {
-        alert("No matching booking found");
-      }
+  await axios.patch(`http://localhost:5000/api/bookings/cancel/${match._id}`);
+  setSuccessMessage("Your booking request was cancelled.");
+setShowSuccessModal(true);
+  setShowPendingModal(false);
+  setShowSuccessModal(true);  // 👉 trigger your existing success modal
+} else {
+  setCooldownMessage("No matching pending booking found.");
+  setShowPendingModal(false);
+  setShowRejectedModal(true);  // 👉 or optionally reuse rejected modal for feedback
+}
+
       await refreshBookingData()
     } catch (err) {
       alert("Failed to cancel pending booking");
@@ -509,14 +521,27 @@ const handleUserConfirmedCancel = async () => {
 )}
 
 {/* Modal: Final Confirmation - Step 2 */}
+{/* Cancel Confirmation Modal */}
 {showConfirmCancelModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded shadow-xl max-w-md w-full">
-      <h2 className="text-xl font-bold mb-3 text-red-700">Confirm Cancellation</h2>
-      <p>Are you sure you want to cancel your booking?</p>
-      <div className="flex justify-end gap-3 mt-4">
-        <button onClick={() => setShowConfirmCancelModal(false)} className="px-4 py-2 bg-gray-300 rounded">Go Back</button>
-        <button onClick={handleUserConfirmedCancel} className="px-4 py-2 bg-red-600 text-white rounded">Yes, Cancel</button>
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl shadow-lg p-8 w-80 text-center animate-fadeInUp">
+      <h2 className="text-xl font-bold mb-4 text-red-600">Cancel this booking?</h2>
+      <p className="text-gray-700 mb-6">
+        Are you sure you want to cancel this slot? This action cannot be undone.
+      </p>
+      <div className="flex gap-3 justify-center">
+        <button
+          onClick={handleUserConfirmedCancel}
+          className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition"
+        >
+          Yes, Cancel
+        </button>
+        <button
+          onClick={() => setShowConfirmCancelModal(false)}
+          className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-4 py-2 rounded-lg transition"
+        >
+          No
+        </button>
       </div>
     </div>
   </div>
@@ -526,17 +551,27 @@ const handleUserConfirmedCancel = async () => {
 {showSuccessModal && (
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div className="bg-white p-6 rounded-lg shadow-lg text-center w-80">
-      <h2 className="text-xl font-bold text-green-700 mb-4">Success!</h2>
-      <p className="mb-4 text-gray-700">Your booking request has been sent successfully.</p>
+      <h2 className={`text-xl font-bold mb-4 ${
+  successMessage.includes('cancel') ? 'text-red-600' : 'text-green-700'
+}`}>
+  {successMessage.includes('cancel') ? 'Cancelled' : 'Success!'}
+</h2>
+      <p className="mb-4 text-gray-700">{successMessage}</p>
       <button
-        onClick={() => setShowSuccessModal(false)}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      >
-        OK
-      </button>
+  onClick={() => setShowSuccessModal(false)}
+  className={`px-4 py-2 rounded text-white ${
+    successMessage.includes('cancel')
+      ? 'bg-red-600 hover:bg-red-700'
+      : 'bg-blue-600 hover:bg-blue-700'
+  }`}
+>
+  OK
+</button>
     </div>
   </div>
 )}
+
+
 
     </div>
     </div>

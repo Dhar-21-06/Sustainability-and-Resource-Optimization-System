@@ -34,7 +34,8 @@ const notifyUsersAboutAvailableSlots = async () => {
     const message = `The slot you were rejected for (${lab} on ${date} at ${time}) is now available! You can try booking again.`;
     
     // Notify faculty user
-    await Notification.create({ userId, message, role: 'faculty' });
+    await Notification.create({ userId, message, role: 'faculty',link: '/my-bookings', bookingId: booking._id
+ });
 
 const adminProfiles = await Profile.find({ role: "admin", labIncharge: lab });
 
@@ -44,7 +45,8 @@ for (const profile of adminProfiles) {
     await Notification.create({
       userId: adminUser._id,
       message: `Faculty user with ID ${userId} can now rebook the available slot for ${lab} on ${date} at ${time}.`,
-      role: 'admin'
+      role: 'admin',
+      link: '/admin/requests'
     });
   }
  else {
@@ -115,7 +117,8 @@ const notifyUsersBeforeSlot = async () => {
             userId: booking.userId._id,
             message: msg,
             role: 'faculty',
-            link: '/user/bookings#current'
+            link: '/user/bookings#current',
+            bookingId: booking._id
           });
         }
       }

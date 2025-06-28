@@ -15,10 +15,15 @@ const notificationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  link: {
+  type: String
+},
+bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking' },
   read: {
     type: Boolean,
     default: false
   }
+
 }, {
   timestamps: true
 });

@@ -74,8 +74,14 @@ useEffect(() => {
             !noti.read ? 'bg-blue-100' : 'bg-white'
           }`}
           onClick={() => {
-            if (noti.link) navigate(noti.link);
-          }}
+  if (noti.link) {
+    const url = new URL(noti.link, window.location.origin);
+    if (noti.bookingId) {
+      url.searchParams.append("highlight", noti.bookingId);
+    }
+    navigate(url.pathname + url.search + url.hash);
+  }
+}}
         >
           <div className="flex flex-col">
             <span>{noti.message}</span>
