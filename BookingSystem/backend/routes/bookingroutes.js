@@ -89,7 +89,8 @@ router.post('/request', async (req, res) => {
           userId: admin._id,
           message: msg,
           role: 'admin',
-          link: '/admin/pending-requests'
+          link: '/admin/pending-requests',
+          bookingId: newBooking._id
         });
         console.log(`📨 Sending notification to ${profile.email}`);
       }
@@ -135,7 +136,8 @@ router.patch('/cancel/:id', async (req, res) => {
             userId: admin._id,
             message: msg,
             role: 'admin',
-            link: ''
+            link: '',
+            bookingId: booking._id 
           });
         }
       }
@@ -205,7 +207,8 @@ for (const rejected of rejectedBookings) {
     userId: rejected.userId._id,
     message: `❌ Hi ${rejected.userId.name}, Your booking for ${booking.lab} on ${booking.date} at ${booking.time} was auto-rejected as another request was approved.`,
     role: 'faculty',
-    link: '/user/bookings#history'
+    link: '/user/bookings#history',
+    bookingId: booking._id
   });
 }
 
@@ -216,7 +219,8 @@ for (const rejected of rejectedBookings) {
       userId: booking.userId,
       message: msg,
       role: 'faculty',
-      link: '/user/bookings#current'
+      link: '/user/bookings#current',
+      bookingId: booking._id 
     });
 
     res.json({ message: 'Booking approved and notification sent' });
@@ -245,7 +249,8 @@ router.patch('/reject/:id', async (req, res) => {
       userId: booking.userId,
       message: msg,
       role: 'faculty',
-      link: '/user/bookings#history'
+      link: '/user/bookings#history',
+      bookingId: booking._id
     });
 
     res.json({ message: 'Booking rejected and notification sent' });
@@ -254,7 +259,7 @@ router.patch('/reject/:id', async (req, res) => {
   }
 });
 
-// 📌 Get only valid future pending bookings (delete expired pending)
+// 📌 Get all pending bookings (for Admin)
 router.get('/pending', async (req, res) => {
   const { adminEmail } = req.query;
 
@@ -273,35 +278,15 @@ router.get('/pending', async (req, res) => {
       return res.status(400).json({ message: 'Admin is not in charge of any lab' });
     }
 
-    const allPending = await Booking.find({
+    // 🔐 Get only pending requests for this lab
+    const pendingBookings = await Booking.find({
       status: 'Pending',
       lab: labIncharge
-    });
+    })
+      .populate('userId', 'name email')
+      .sort({ requestedAt: -1 });
 
-    const now = new Date();
-    const validPending = [];
-
-    for (const booking of allPending) {
-      const [startHour] = booking.time.split(':'); // "10:00-11:00" → "10"
-      const slotTime = new Date(`${booking.date}T${startHour.padStart(2, '0')}:00:00`);
-
-      const approvalDeadline = new Date(slotTime.getTime() - 30 * 60 * 1000); // 30 mins before slot
-
-      if (now > approvalDeadline) {
-        // ⛔️ Delete expired pending booking
-        await Booking.deleteOne({ _id: booking._id });
-      } else {
-        // ✅ Add to valid pending list
-        validPending.push(booking);
-      }
-    }
-
-    // Populate user details and sort by request time
-    const populated = await Booking.populate(validPending, { path: 'userId', select: 'name email' });
-
-    populated.sort((a, b) => new Date(b.requestedAt) - new Date(a.requestedAt));
-
-    res.json(populated);
+    res.json(pendingBookings);
   } catch (err) {
     console.error("❌ Error in /pending:", err);
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -396,7 +381,7 @@ router.get('/available', async (req, res) => {
             });
             if (!existingNotification) {
               const msg = `The previously rejected slot for ${slot.lab} on ${slot.date} at ${slot.time} is now available again. You may try booking it again if needed.`;
-              await Notification.create({ userId: recentRejection.userId, message: msg, role: 'faculty', link: '/user/bookings#history' });
+              await Notification.create({ userId: recentRejection.userId, message: msg, role: 'faculty', link: '/user/bookings#history', bookingId: recentRejection._id });
             }
           }
         }

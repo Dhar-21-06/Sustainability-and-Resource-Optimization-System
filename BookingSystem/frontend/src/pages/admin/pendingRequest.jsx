@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+
 import axios from 'axios';
 import AdminNavbar from '../../components/common/admin_c/AdminNavbar';
 import AdminHeader from '../../components/common/admin_c/AdminHeader';
@@ -14,7 +16,8 @@ const PendingRequests = () => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
   const [selectedApproveRequest, setSelectedApproveRequest] = useState(null);
-
+  const [highlightBookingId, setHighlightBookingId] = useState(null);
+const location = useLocation();
 
   // 🧠 Fetch all pending bookings from backend
 const fetchPendingRequests = async () => {
@@ -45,6 +48,18 @@ const fetchPendingRequests = async () => {
 
     return () => clearInterval(interval); // Cleanup    
   }, []);
+
+  useEffect(() => {
+  const searchParams = new URLSearchParams(location.search);
+  const bookingId = searchParams.get("highlight");
+
+  if (bookingId) {
+    setHighlightBookingId(bookingId);
+    const timer = setTimeout(() => setHighlightBookingId(null), 5000);
+    return () => clearTimeout(timer);
+  }
+}, [location.search]);
+
 
   const confirmApprove = async (bookingId) => {
     try {
@@ -99,7 +114,8 @@ const fetchPendingRequests = async () => {
             <RequestCard
   key={req._id}
   {...req}
-  facultyName={req.userId?.name}  // 👈 pass faculty name here
+  facultyName={req.userId?.name}
+  highlight={highlightBookingId === req._id}
   onApprove={() => {
     setSelectedApproveRequest(req);
     setShowApproveConfirmModal(true);

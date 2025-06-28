@@ -1,8 +1,9 @@
 import React from 'react';
 
-const RequestCard = ({ lab, date, time, facultyName, purpose, onApprove, onReject }) => {
+const RequestCard = ({ lab, date, time, facultyName, purpose, onApprove, onReject, highlight }) => {
   return (
-    <div className="bg-white rounded-lg shadow p-4 mb-4 flex flex-col md:flex-row md:items-center md:justify-between">
+    <div className={`rounded-lg shadow p-4 mb-4 flex flex-col md:flex-row md:items-center md:justify-between transition-all duration-500
+  ${highlight ? 'bg-blue-100' : 'bg-white'}`}>
       <div>
         <h3 className="text-lg font-semibold text-blue-800">{lab}</h3>
         <p className="text-gray-600">📅 {date}</p>
