@@ -94,7 +94,7 @@ const closeLogoutModal = () => {
     <nav className="navbar">
       <div className="navbar-logo">
         <img src={logo} alt="CIT Logo" />
-        <span>Smart Infrastructure Booking System</span>
+        <span>Booking System</span>
       </div>
 
       <ul className="navbar-links">

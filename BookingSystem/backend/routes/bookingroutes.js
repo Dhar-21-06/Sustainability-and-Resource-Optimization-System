@@ -557,27 +557,19 @@ router.get('/upcoming', async (req, res) => {
 
 // 📌 Get all slots for a lab on a specific date, including isAvailable flag
 
-router.get("/lab/:lab/:date/slots", async (req, res) => {
+router.get('/lab/:lab/:date/slots', async (req, res) => {
   const { lab, date } = req.params;
-  try {
-    const slots = await Slot.find({ lab, date });
+  const { status } = req.query;
 
-    const slotData = await Promise.all(slots.map(async (slot) => {
-      const booking = await Booking.findOne({ lab, date, time: slot.time });
-
-      return {
-        time: slot.time,
-        status: booking ? booking.status : "Available",
-        isAvailable: !booking || !["Approved", "Completed"].includes(booking.status),
-        purpose: booking?.purpose || "",
-      };
-    }));
-
-    res.json(slotData);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Error fetching slots" });
+  let query = { lab, date };
+  if (status === 'approved') {
+    query.status = 'Approved';
+  } else if (status === 'history') {
+    query.status = { $in: ['Cancelled', 'Rejected', 'Completed'] };
   }
+
+  const bookings = await Booking.find(query);
+  res.json(bookings);
 });
 
 router.get('/lab/:lab', async (req, res) => {

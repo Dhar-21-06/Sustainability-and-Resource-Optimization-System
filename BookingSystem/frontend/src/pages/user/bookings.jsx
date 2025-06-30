@@ -56,11 +56,26 @@ const CheckAllocation = () => {
 
     fetchUserBookings();
   }, [activeTab]);
-  
+
 useEffect(() => {
   const params = new URLSearchParams(location.search);  
-  const tab = params.get('tab') || 'current';
   const bookingId = params.get('highlight');
+  let tab = params.get('tab');
+
+  // Fallback logic based on bookingId status
+  if (!tab && bookingId && bookings.length > 0) {
+    const matchedBooking = bookings.find(b => b._id === bookingId);
+    if (matchedBooking) {
+      const status = matchedBooking.status;
+      if (status === 'Pending') tab = 'pending';
+      else if (['Rejected', 'Completed', 'Cancelled'].includes(status)) tab = 'history';
+      else tab = 'current';
+    } else {
+      tab = 'current'; // fallback if booking not found
+    }
+  } else if (!tab) {
+    tab = 'current';
+  }
 
   setActiveTab(tab);
   setHighlightBookingId(bookingId);
@@ -76,7 +91,7 @@ useEffect(() => {
       params.delete('highlight');
       params.set('tab', activeTab);
       navigate(`?${params.toString()}`, { replace: true });
-    }, 3000);
+    }, 2000);
     return () => clearTimeout(timer);
   }
 
@@ -379,80 +394,53 @@ const confirmRebook = async () => {
 
                   <div className="ml-auto flex items-center">
                     {booking.status === 'Rejected' && (() => {
-                      if (booking.status === 'Rejected') {
-                        const now = new Date();
-                        const [startTime] = booking.time.split('-');
-                        const bookingDateTime = new Date(`${booking.date}T${startTime.trim()}:00`);
-                        const rejectedAt = new Date(booking.rejectionTimestamp);
-                        const unblockTime = new Date(rejectedAt.getTime() + 24 * 60 * 60 * 1000);
+                      const now = new Date();
+                      const [startTime] = booking.time.split('-');
+                      const bookingDateTime = new Date(`${booking.date}T${startTime.trim()}:00`);
+                      const rejectedAt = new Date(booking.rejectionTimestamp);
+                      const unblockTime = new Date(rejectedAt.getTime() + 24 * 60 * 60 * 1000);
 
-                        const isExpired = bookingDateTime <= now;
+                      // 🧠 Check if expired or within 1 hour of slot start
+                      const isExpired = bookingDateTime <= now;
+                      const isLastHour = now >= new Date(bookingDateTime.getTime() - 60 * 60 * 1000);
 
-                        // Did the user already rebook this slot?
-                        const rebookedByUser = bookings.some(b =>
-                          (b.status === 'Pending' || b.status === 'Approved') &&
-                          b.lab === booking.lab &&
-                          b.date === booking.date &&
-                          b.time === booking.time
-                        );
+                      if (isExpired || isLastHour) {
+                        return <span className="text-sm text-gray-400 italic ml-6">Slot expired</span>;
+                      }
 
-                        // Did someone else take it?
-                        const takenByOther = !rebookedByUser && !isExpired;
+                      // 🧠 Check if user has already rebooked
+                      const rebookedByUser = bookings.some(b =>
+                        (b.status === 'Pending' || b.status === 'Approved') &&
+                        b.lab === booking.lab &&
+                        b.date === booking.date &&
+                        b.time === booking.time
+                      );
 
-                        // Case 1: Expired
-                        if (isExpired) {
-                          return <span className="text-sm text-gray-400 italic ml-6">Slot expired</span>;
-                        }
+                      if (rebookedByUser) {
+                        return <span className="text-sm text-green-600 italic ml-6">You rebooked</span>;
+                      }
 
-                        // Case 2: You already rebooked
-                        if (rebookedByUser) {
-                          return <span className="text-sm text-green-600 italic ml-6">You rebooked</span>;
-                        }
-
-                        // ⏳ Cooldown logic (comes first)
-                        const timeDiff = unblockTime - now;
-                        if (timeDiff > 0) {
-                          const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-                          const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-                          return (
-                            <span className="text-sm text-gray-500 italic ml-6">
-                              ⏳ Cooldown: {hours}h {minutes}m
-                            </span>
-                          );
-                        }
-
-                        // ✅ Check if rebookable
-                        if (!isExpired && !rebookedByUser) {
-                          return (
-                            <button
-                              onClick={() => handleRebookAttempt(booking)}
-                              className="border px-3 py-1 rounded hover:bg-gray-100 ml-6"
-                            >
-                              Rebook
-                            </button>
-                          );
-                        }
-
-                        // Case: You already rebooked
-                        if (rebookedByUser) {
-                          return <span className="text-sm text-green-600 italic ml-6">You rebooked</span>;
-                        }
-
-                        // Case: Expired
-                        if (isExpired) {
-                          return <span className="text-sm text-gray-400 italic ml-6">Slot expired</span>;
-                        }
-
-                        // ✅ Show rebook button
+                      // 🧠 Still in cooldown
+                      const timeDiff = unblockTime - now;
+                      if (timeDiff > 0) {
+                        const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
                         return (
-                          <button
-                            onClick={() => handleRebookAttempt(booking)}
-                            className="border px-3 py-1 rounded hover:bg-gray-100 ml-6"
-                          >
-                            Rebook
-                          </button>
+                          <span className="text-sm text-gray-500 italic ml-6">
+                            ⏳ Cooldown: {hours}h {minutes}m
+                          </span>
                         );
                       }
+
+                      // ✅ Eligible for rebooking
+                      return (
+                        <button
+                          onClick={() => handleRebookAttempt(booking)}
+                          className="border px-3 py-1 rounded hover:bg-gray-100 ml-6"
+                        >
+                          Rebook
+                        </button>
+                      );
                     })()}
                     {booking.status === 'Completed' && (
                       <span className="text-sm text-gray-500 italic ml-6">✔ Completed</span>

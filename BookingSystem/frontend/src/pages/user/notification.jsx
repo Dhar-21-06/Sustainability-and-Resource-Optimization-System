@@ -74,18 +74,29 @@ useEffect(() => {
             !noti.read ? 'bg-blue-100' : 'bg-white'
           }`}
           onClick={() => {
-  if (noti.link) {
-    const url = new URL(noti.link, window.location.origin);
-    if (noti.bookingId) {
-      url.searchParams.append("highlight", noti.bookingId);
-    }
-    if (noti.link) {
-  const url = new URL(noti.link, window.location.origin);
-  navigate(url.pathname + url.search);
-}
+            if (noti.link) {
+              // Construct full URL
+              const url = new URL(noti.link, window.location.origin);
 
-  }
-}}
+              // Append highlight ID if available
+              if (noti.bookingId) {
+                url.searchParams.set("highlight", noti.bookingId);
+
+                // 🔁 Optional: Smart tab routing based on booking status
+                if (noti.message?.toLowerCase().includes('rejected')) {
+                  url.searchParams.set("tab", "history");
+                } else if (noti.message?.toLowerCase().includes('cancelled')) {
+                  url.searchParams.set("tab", "history");
+                } else if (noti.message?.toLowerCase().includes('approved')) {
+                  url.searchParams.set("tab", "current");
+                } else if (noti.message?.toLowerCase().includes('pending')) {
+                  url.searchParams.set("tab", "pending");
+                }
+              }
+
+              navigate(url.pathname + url.search);
+            }
+          }}
         >
           <div className="flex flex-col">
             <span>{noti.message}</span>

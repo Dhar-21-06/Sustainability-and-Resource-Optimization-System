@@ -44,34 +44,55 @@ const AdminCheckAllocation = () => {
   }, []);
 
   // 📦 Fetch bookings for lab+date and compute slot status
-  useEffect(() => {
-    if (!labName || !date) return;
+// 📦 Fetch bookings based on tab
+useEffect(() => {
+  if (!labName || !date) return;
 
     const fetchAndComputeSlots = async () => {
-      const res = await axios.get(`http://localhost:5000/api/bookings/lab/${encodeURIComponent(labName)}/${date}/slots`);
-      const bookings = res.data.filter(b => b.date === date);
+      let url = `http://localhost:5000/api/bookings/lab/${encodeURIComponent(labName)}/${date}/slots`;
 
+      // Add status query only for 'approved' and 'history' tabs
+      if (activeTab === 'approved') url += '?status=approved';
+      else if (activeTab === 'history') url += '?status=history';
+
+      const res = await axios.get(url);
+      const bookings = res.data;
+
+      // For 'available', remove Approved and Completed slots
+      if (activeTab === 'available') {
+        const blockedTimes = bookings
+          .filter(b => ['Approved', 'Completed'].includes(b.status))
+          .map(b => b.time);
+
+        const availableSlots = DEFAULT_SLOTS
+          .filter(time => !blockedTimes.includes(time))
+          .map(time => ({
+            time,
+            status: 'Available',
+            isAvailable: true
+          }));
+
+        setSlotData(availableSlots);
+        return;
+      }
+
+      // For other tabs (approved/history), map full slot info
       const slots = DEFAULT_SLOTS.map(time => {
         const booking = bookings.find(b => b.time === time);
-        if (!booking) {
-          return { time, status: 'Available', isAvailable: true };
-        }
-        const status = booking.status;
-        const isUnavailable = ['Approved', 'Completed'].includes(status);
+        if (!booking) return { time, status: 'Available', isAvailable: true };
+
         return {
           time,
-          status,
+          status: booking.status,
           purpose: booking.purpose,
-          isAvailable: !isUnavailable
+          isAvailable: !['Approved', 'Completed'].includes(booking.status)
         };
       });
 
       setSlotData(slots);
     };
-
-
-    fetchAndComputeSlots();
-  }, [labName, date, activeTab]);
+  fetchAndComputeSlots();
+}, [labName, date, activeTab]);
 
   const renderAvailable = () => {
     const availableSlots = slotData.filter(slot => slot.isAvailable);
@@ -96,7 +117,10 @@ const AdminCheckAllocation = () => {
       : <ul className="space-y-2">
           {approvedSlots.map((slot, i) => (
             <li key={i} className="p-3 bg-white shadow rounded flex justify-between">
-              <span>{slot.time}</span>
+              <div>
+                <div className="font-semibold">{slot.time}</div>
+                  {slot.purpose && <div className="text-sm text-gray-500">Purpose: {slot.purpose}</div>}
+                </div>
               <span className="text-blue-600">Approved</span>
             </li>
           ))}
@@ -153,14 +177,17 @@ const AdminCheckAllocation = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <AdminNavbar />
-      <main className="p-6 flex-1">
-        <h1 className="text-2xl font-bold mb-4">
-          Check Allocation: <span className="text-blue-600">{labName}</span>
-        </h1>
+        <AdminNavbar />
 
-        {/* 📅 Date & Tabs */}
-        <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <main className="p-6 flex-1 mt-20">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-800">
+              Check Allocation: <span className="text-blue-600">{labName}</span>
+            </h1>
+          </div>
+
+          {/* 📅 Date & Tabs */}
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <input
             type="date"
             value={date}
