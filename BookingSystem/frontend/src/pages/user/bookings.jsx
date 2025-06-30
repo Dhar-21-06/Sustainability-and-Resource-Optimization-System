@@ -237,59 +237,53 @@ const confirmRebook = async () => {
     <div className="p-6 min-h-screen bg-[#f9fafb]">
       <h2 className="text-2xl font-bold mb-6 text-blue-800">My Bookings</h2>
 
-      <div className="flex gap-3 mb-6">
-      <button
-        onClick={() => {
-          navigate(`?tab=current`)
-        }}
-        className={`px-4 py-2 rounded ${activeTab === 'current' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-      >
-        Current Bookings
-      </button>
+        <div className="sticky top-16 z-30 bg-[#f9fafb] py-4">
+          <div className="flex gap-3 mb-4">
+            <button
+              onClick={() => navigate(`?tab=current`)}
+              className={`px-4 py-2 rounded ${activeTab === 'current' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+            >
+              Current Bookings
+            </button>
+            <button
+              onClick={() => navigate(`?tab=pending`)}
+              className={`px-4 py-2 rounded ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+            >
+              Pending Requests
+            </button>
+            <button
+              onClick={() => navigate(`?tab=history`)}
+              className={`px-4 py-2 rounded ${activeTab === 'history' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+            >
+              Booking History
+            </button>
+          </div>
 
-      <button
-        onClick={() => {
-          navigate(`?tab=pending`)
-        }}
-        className={`px-4 py-2 rounded ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-      >
-        Pending Requests
-      </button>
+          <div className="flex flex-wrap gap-4 items-center">
+            <label className="text-sm font-medium text-gray-700">
+              Filter by Lab:
+              <select
+                className="ml-2 border px-3 py-1 rounded shadow-sm"
+                value={selectedLab}
+                onChange={(e) => setSelectedLab(e.target.value)}>
+                <option value="All">All</option>
+                {allLabs.map((lab, idx) => (
+                  <option key={idx} value={lab}>{lab}</option>
+                ))}
+              </select>
+            </label>
 
-      <button
-        onClick={() => {
-          navigate(`?tab=history`)
-        }}
-        className={`px-4 py-2 rounded ${activeTab === 'history' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'}`}
-      >
-        Booking History
-      </button>
-      </div>
-
-      <div className="flex flex-wrap gap-4 mb-6 items-center">
-        <label className="text-sm font-medium text-gray-700">
-          Filter by Lab:
-          <select
-            className="ml-2 border px-3 py-1 rounded shadow-sm"
-            value={selectedLab}
-            onChange={(e) => setSelectedLab(e.target.value)}>
-            <option value="All">All</option>
-            {allLabs.map((lab, idx) => (
-              <option key={idx} value={lab}>{lab}</option>
-            ))}
-          </select>
-        </label>
-
-        <label className="text-sm font-medium text-gray-700">
-          Date:
-          <input
-            type="date"
-            className="ml-2 border px-3 py-1 rounded shadow-sm"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
-        </label>
-      </div>
+            <label className="text-sm font-medium text-gray-700">
+              Date:
+              <input
+                type="date"
+                className="ml-2 border px-3 py-1 rounded shadow-sm"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+            </label>
+          </div>
+        </div>
 
       {/* ================= CURRENT BOOKINGS ================= */}
       {activeTab === 'current' && (

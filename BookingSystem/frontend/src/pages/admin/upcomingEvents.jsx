@@ -26,7 +26,7 @@ useEffect(() => {
     <div className="min-h-screen flex flex-col">
       <AdminNavbar />
     <div className="flex-grow bg-gray-100 pt-24 px-6">
-  <h2 className="text-3xl font-bold mb-6 text-blue-800">Upcoming Events</h2>
+  <h2 className="text-3xl font-bold mb-6 text-blue-800">Upcoming Slots</h2>
   {upcomingEvents.length === 0 ? (
     <p className="text-gray-500">No upcoming events found.</p>
   ) : (

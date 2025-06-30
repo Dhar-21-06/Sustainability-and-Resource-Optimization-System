@@ -4,6 +4,7 @@ import './navbar.css';
 import logo from '../../../assets/cit-chennai-logo.png';
 import { Bell } from 'lucide-react';
 import axios from 'axios';
+import { useRef } from 'react';
 import { useEffect } from 'react';
 import LogoutModal from '../../common/LogoutModal';
 
@@ -15,6 +16,8 @@ function Navbar() {
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const notifDropdownRef = useRef(null);
+
 
 
   const navigate = useNavigate();
@@ -37,6 +40,35 @@ function Navbar() {
   const interval = setInterval(fetchUnreadCount, 5000);
   return () => clearInterval(interval);
 }, []);
+
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+  const handleClickOutsideNotif = (event) => {
+    if (notifDropdownRef.current && !notifDropdownRef.current.contains(event.target)) {
+      setShowNotifDropdown(false);
+    }
+  };
+
+  document.addEventListener('mousedown', handleClickOutsideNotif);
+  return () => {
+    document.removeEventListener('mousedown', handleClickOutsideNotif);
+  };
+}, []);
+
 
 
   const toggleDropdown = () => {
@@ -92,84 +124,98 @@ const closeLogoutModal = () => {
 
   return (
     <nav className="navbar">
-      <div className="navbar-logo">
-        <img src={logo} alt="CIT Logo" />
-        <span>Booking System</span>
-      </div>
+    <div
+      className="navbar-logo cursor-pointer flex items-center"
+      onClick={() => navigate('/faculty/home')}
+    >
+      <img src={logo} alt="CIT Logo" className="h-10 w-auto mr-2" />
+      <span className="text-white font-bold text-lg">Booking System</span>
+    </div>
 
       <ul className="navbar-links">
 
-  <li className="notification-bell">
-    <button onClick={handleBellClick} className="relative p-1 rounded-full hover:bg-gray-200">
-      <Bell className="w-6 h-6 text-white" />
-      {unreadCount > 0 && (
-  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-    {unreadCount}
-  </span>
-)}
-    </button>
+        <li className="notification-bell" ref={notifDropdownRef}>
+          <button onClick={handleBellClick} className="relative p-1 rounded-full hover:bg-gray-200">
+            <Bell className="w-6 h-6 text-white" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                {unreadCount}
+              </span>
+            )}
+          </button>
 
-    {showNotifDropdown && (
-    <div className="notification-dropdown">
-      <div className="notif-header">Notifications</div>
-      {notifications.length === 0 ? (
-        <div className="notif-item">No notifications</div>
-      ) : (
-        notifications.slice(0, 1).map((noti, idx) => (
-  <div
-    key={idx}
-    className="notif-item cursor-pointer hover:bg-blue-100 transition"
-    onClick={() => {
-      if (noti.link) {
-        const url = new URL(noti.link, window.location.origin);
-        if (noti.bookingId) {
-          url.searchParams.append("highlight", noti.bookingId);
-        }
-        navigate(url.pathname + url.search);
-      } else {
-        navigate('/faculty/notifications');
-      }
-    }}
-  >
-    {noti.message}
-  </div>
-))
-      )}
-      <div
-        className="see-all"
-        onClick={() => navigate('/faculty/notifications')}
-      >
-        See all Notifications →
-      </div>
-    </div>
-  )}
-</li>
+          {showNotifDropdown && (
+            <div className="notification-dropdown animate-fadeIn z-50">
+              <div className="notif-header">Notifications</div>
+              {notifications.length === 0 ? (
+                <div className="notif-item">No notifications</div>
+              ) : (
+                notifications.slice(0, 1).map((noti, idx) => (
+                  <div
+                    key={idx}
+                    className="notif-item cursor-pointer hover:bg-blue-100 transition"
+                    onClick={() => {
+                      if (noti.link) {
+                        const url = new URL(noti.link, window.location.origin);
+                        if (noti.bookingId) {
+                          url.searchParams.append("highlight", noti.bookingId);
+                        }
+                        navigate(url.pathname + url.search);
+                      } else {
+                        navigate('/faculty/notifications');
+                      }
+                    }}
+                  >
+                    {noti.message}
+                  </div>
+                ))
+              )}
+              <div
+                className="see-all"
+                onClick={() => navigate('/faculty/notifications')}
+              >
+                See all Notifications →
+              </div>
+            </div>
+          )}
+        </li>
 
   <li>
     <Link to="/faculty/home">Home</Link>
   </li>
 
-  <li className="dropdown" onClick={toggleDropdown}>
-    <span className="dropdown-toggle">Profile ▾</span>
+    <li className="relative" ref={dropdownRef}>
+    <button
+      onClick={toggleDropdown}
+      className="text-white hover:text-gray-300 font-semibold"
+    >
+      Profile ▾
+    </button>
+
     {dropdownOpen && (
-      <div className="dropdown-content">
-        <span className="edit-profile" onClick={handleEditProfile}>
+      <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200 animate-fadeIn">
+        <button
+          onClick={handleEditProfile}
+          className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-blue-100"
+        >
           Edit Profile
-        </span>
-        <div>&nbsp;</div>
-        <span className="logout-btn" onClick={() => setShowLogoutModal(true)}>
-  Logout
-</span>
+        </button>
+        <button
+          onClick={() => setShowLogoutModal(true)}
+          className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-100"
+        >
+          Logout
+        </button>
       </div>
     )}
   </li>
 
-</ul>
-<LogoutModal 
-  isOpen={showLogoutModal} 
-  onClose={() => setShowLogoutModal(false)} 
-  onConfirm={confirmLogout} 
-/>
+    </ul>
+    <LogoutModal 
+      isOpen={showLogoutModal} 
+      onClose={() => setShowLogoutModal(false)} 
+      onConfirm={confirmLogout} 
+    />
 
     </nav>
   );
