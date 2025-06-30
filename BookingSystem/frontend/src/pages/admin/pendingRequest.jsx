@@ -196,7 +196,7 @@ const fetchPendingRequests = async () => {
         {showConfirmation && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
             <div className="bg-white p-5 rounded-lg shadow-lg text-center w-96">
-              <h3 className="text-lg font-semibold text-green-700 mb-3">Notification</h3>
+              <h3 className="text-lg font-semibold text-green-700 mb-3">Approved</h3>
               <p className="text-gray-800 mb-4">{confirmationMessage}</p>
               <button
                 onClick={() => setShowConfirmation(false)}

@@ -28,12 +28,14 @@ useEffect(() => {
   return (
     <div className="min-h-screen flex flex-col">
       <AdminNavbar />
-      <main className="flex-grow p-6 bg-gray-100">
+      <div className="flex-grow p-6 bg-gray-100">
         <h1 className="text-2xl font-semibold text-blue-800 mb-6">Upcoming Events</h1>
+        <div>
         {events.map((event, index) => (
           <EventCard key={index} {...event} />
         ))}
-      </main>
+        </div>
+      </div>
     </div>
   );
 };

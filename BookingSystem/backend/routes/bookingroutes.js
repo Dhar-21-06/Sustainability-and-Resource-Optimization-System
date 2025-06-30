@@ -5,7 +5,18 @@ const router = express.Router();
 const { notifyUsersAboutAvailableSlots, deleteOldNotifications } = require('../controllers/notificationcontroller');
 const User = require('../models/user');
 const Notification = require('../models/notification');
-const Profile = require('../models/profile'); // ⬅ Add at the top if not already
+const Profile = require('../models/profile'); 
+const markCompletedBookings = require('../utils/markCompleted');
+const rejectExpiredPendingBookings = require('../utils/rejectExpiredPending');
+
+router.patch('/mark-completed', async (req, res) => {
+  try {
+    const result = await markCompletedBookings();
+    res.status(200).json({ message: "Marked completed", result });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to mark completed bookings" });
+  }
+});
 
 // 📌 User requests a slot
 router.post('/request', async (req, res) => {
@@ -199,7 +210,8 @@ const rejectedBookings = await Booking.find({
   lab: booking.lab,
   date: booking.date,
   time: booking.time,
-  status: 'Rejected'
+  status: 'Rejected',
+  _id: { $ne: booking._id }
 }).populate('userId', 'name');  // ✅ this brings user name along with booking
 
 for (const rejected of rejectedBookings) {
@@ -207,7 +219,7 @@ for (const rejected of rejectedBookings) {
     userId: rejected.userId._id,
     message: `❌ Hi ${rejected.userId.name}, Your booking for ${booking.lab} on ${booking.date} at ${booking.time} was auto-rejected as another request was approved.`,
     role: 'faculty',
-    link: '/user/bookings#history',
+    link: `/user/bookings?tab=history&highlight=${booking._id}`,
     bookingId: booking._id
   });
 }
@@ -219,8 +231,8 @@ for (const rejected of rejectedBookings) {
       userId: booking.userId,
       message: msg,
       role: 'faculty',
-      link: '/user/bookings#current',
-      bookingId: booking._id 
+      link: `/user/bookings?tab=current&highlight=${booking._id}`,
+      bookingId: booking._id
     });
 
     res.json({ message: 'Booking approved and notification sent' });
@@ -239,7 +251,10 @@ router.patch('/reject/:id', async (req, res) => {
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
 
     booking.status = 'Rejected';
-    booking.rejectionTimestamp = new Date();
+    const rejectedAt = booking.rejectionTimestamp ? new Date(booking.rejectionTimestamp) : null;
+    if (!rejectedAt) return; // or show fallback
+
+    booking.rejectionReason = reason || 'Rejected by admin';
     await booking.save();
     const user = await User.findById(booking.userId);
 
@@ -249,7 +264,7 @@ router.patch('/reject/:id', async (req, res) => {
       userId: booking.userId,
       message: msg,
       role: 'faculty',
-      link: '/user/bookings#history',
+      link: `/user/bookings?tab=history&highlight=${booking._id}`,
       bookingId: booking._id
     });
 
@@ -264,6 +279,7 @@ router.get('/pending', async (req, res) => {
   const { adminEmail } = req.query;
 
   try {
+    await rejectExpiredPendingBookings();
     if (!adminEmail) {
       return res.status(400).json({ message: 'Admin email is required' });
     }
@@ -307,8 +323,38 @@ router.get('/approved', async (req, res) => {
 // 📌 Get all bookings for a specific user
 router.get('/user/:userId', async (req, res) => {
   try {
-    const bookings = await Booking.find({ userId: req.params.userId }).sort({ date: 1, time: 1 });
-    res.json(bookings);
+    const now = new Date();
+    await rejectExpiredPendingBookings();
+    await markCompletedBookings();
+
+    // Step 1: Fetch all bookings for user
+    const bookings = await Booking.find({ userId: req.params.userId });
+
+    // Step 2: Mark expired Approved as Completed
+    for (const booking of bookings) {
+      if (
+        booking.status === 'Approved' &&
+        typeof booking.time === 'string' &&
+        booking.time.includes(':') &&
+        booking.date
+      ) {
+        try {
+          const [hour] = booking.time.split(':');
+          const slotTime = new Date(`${booking.date}T${hour.padStart(2, '0')}:00:00`);
+          if (!isNaN(slotTime.getTime()) && slotTime < now) {
+            booking.status = 'Completed';
+            await booking.save();
+          }
+        } catch (e) {
+          console.warn('Skipping invalid booking:', booking._id, booking.time, booking.date);
+        }
+      }
+    }
+
+    // Step 3: Re-fetch updated bookings and return
+    await markCompletedBookings();
+    const updated = await Booking.find({ userId: req.params.userId }).sort({ date: 1, time: 1 });
+    res.json(updated);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -331,6 +377,7 @@ router.get('/history/:userId', async (req, res) => {
       },
       { $set: { status: 'Completed' } }
     );
+    await markCompletedBookings();
     const history = await Booking.find({
       userId: req.params.userId,
       status: { $in: ['Rejected', 'Cancelled','Completed'] }
@@ -381,7 +428,7 @@ router.get('/available', async (req, res) => {
             });
             if (!existingNotification) {
               const msg = `The previously rejected slot for ${slot.lab} on ${slot.date} at ${slot.time} is now available again. You may try booking it again if needed.`;
-              await Notification.create({ userId: recentRejection.userId, message: msg, role: 'faculty', link: '/user/bookings#history', bookingId: recentRejection._id });
+              await Notification.create({ userId: recentRejection.userId, message: msg, role: 'faculty', link: `/user/bookings?tab=history&highlight=${booking._id}`, bookingId: recentRejection._id });
             }
           }
         }
@@ -508,5 +555,54 @@ router.get('/upcoming', async (req, res) => {
   }
 });
 
+// 📌 Get all slots for a lab on a specific date, including isAvailable flag
+
+router.get("/lab/:lab/:date/slots", async (req, res) => {
+  const { lab, date } = req.params;
+  try {
+    const slots = await Slot.find({ lab, date });
+
+    const slotData = await Promise.all(slots.map(async (slot) => {
+      const booking = await Booking.findOne({ lab, date, time: slot.time });
+
+      return {
+        time: slot.time,
+        status: booking ? booking.status : "Available",
+        isAvailable: !booking || !["Approved", "Completed"].includes(booking.status),
+        purpose: booking?.purpose || "",
+      };
+    }));
+
+    res.json(slotData);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error fetching slots" });
+  }
+});
+
+router.get('/lab/:lab', async (req, res) => {
+  try {
+    const { lab } = req.params;
+    const bookings = await Booking.find({
+      lab,
+      status: { $in: ['Approved', 'Rejected', 'Cancelled', 'Completed'] }
+    }).sort({ date: 1, time: 1 });
+
+    res.status(200).json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching bookings", error });
+  }
+});
+
+router.get('/notifications/:userId', async (req, res) => {
+  try {
+    const notifs = await Notification.find({ userId: req.params.userId })
+      .sort({ createdAt: -1 }); // 🔥 latest first
+    res.status(200).json(notifs);
+  } catch (err) {
+    console.error("Error fetching notifications", err);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
 
 module.exports = router;

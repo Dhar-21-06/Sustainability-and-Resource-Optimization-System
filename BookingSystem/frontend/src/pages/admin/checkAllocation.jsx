@@ -1,106 +1,195 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import AdminNavbar from '../../components/common/admin_c/AdminNavbar.jsx';
-import AdminHeader from '../../components/common/admin_c/AdminHeader.jsx';
-import AdminFooter from '../../components/common/admin_c/AdminFooter.jsx';
+import AdminNavbar from '../../components/common/admin_c/AdminNavbar';
+
+const DEFAULT_SLOTS = [
+  "08:00-09:00",
+  "09:00-10:00",
+  "10:00-11:00",
+  "11:00-12:00",
+  "13:00-14:00",
+  "14:00-15:00",
+  "15:00-16:00"
+];
 
 const AdminCheckAllocation = () => {
-  const [labs, setLabs] = useState([]);
-  const [selectedLab, setSelectedLab] = useState(null);
-  const [bookedSlots, setBookedSlots] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [labName, setLabName] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [activeTab, setActiveTab] = useState('available');
+  const [slotData, setSlotData] = useState([]); // holds all slot info
+  const [historyFilter, setHistoryFilter] = useState('All');
 
-  // Fetch labs on mount
+  // 🧠 Set tab based on URL hash
   useEffect(() => {
-    const fetchLabs = async () => {
-      try {
-        const res = await axios.get('http://localhost:5000/api/labs');
-        setLabs(res.data);
-      } catch (err) {
-        console.error("❌ Failed to fetch labs:", err);
-      }
-    };
-    fetchLabs();
+    const hash = window.location.hash.slice(1);
+    if (['available', 'approved', 'history'].includes(hash)) {
+      setActiveTab(hash);
+    }
   }, []);
 
-  // Fetch booked slots when lab or date changes
+  // 🧠 Update URL hash on tab change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    window.location.hash = tab;
+  };
+
+  // 🧠 Get lab name from profile
   useEffect(() => {
-    const fetchBookedSlots = async () => {
-      if (!selectedLab || !selectedDate) return;
-      try {
-        const res = await axios.get(`http://localhost:5000/api/bookings/lab/${selectedLab.name}/${selectedDate}`);
-        const allBookings = res.data.booked || [];
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user?.email) {
+      axios.get(`http://localhost:5000/api/profile/get-profile/${user.email}`)
+        .then(res => setLabName(res.data.labIncharge))
+        .catch(err => console.error('❌ Profile fetch error:', err));
+    }
+  }, []);
 
-        const approvedOnly = allBookings
-          .filter(b => b.status?.toLowerCase() === "approved")
-          .map(b => ({
-            time: b.time,
-            date: selectedDate
-          }));
+  // 📦 Fetch bookings for lab+date and compute slot status
+  useEffect(() => {
+    if (!labName || !date) return;
 
-        setBookedSlots(approvedOnly);
-      } catch (err) {
-        console.error("❌ Failed to fetch booked slots:", err);
-      }
+    const fetchAndComputeSlots = async () => {
+      const res = await axios.get(`http://localhost:5000/api/bookings/lab/${encodeURIComponent(labName)}/${date}/slots`);
+      const bookings = res.data.filter(b => b.date === date);
+
+      const slots = DEFAULT_SLOTS.map(time => {
+        const booking = bookings.find(b => b.time === time);
+        if (!booking) {
+          return { time, status: 'Available', isAvailable: true };
+        }
+        const status = booking.status;
+        const isUnavailable = ['Approved', 'Completed'].includes(status);
+        return {
+          time,
+          status,
+          purpose: booking.purpose,
+          isAvailable: !isUnavailable
+        };
+      });
+
+      setSlotData(slots);
     };
 
-    fetchBookedSlots();
-  }, [selectedLab, selectedDate]);
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <AdminNavbar />
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h2 className="text-2xl font-bold text-blue-800 mb-4">Check Lab Allocations</h2>
+    fetchAndComputeSlots();
+  }, [labName, date, activeTab]);
 
-      {/* Select Date */}
-      <div className="mb-4">
-        <label className="text-sm font-semibold text-gray-700 mr-2">Select Date:</label>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="border px-2 py-1 rounded"
-        />
-      </div>
+  const renderAvailable = () => {
+    const availableSlots = slotData.filter(slot => slot.isAvailable);
 
-      {/* Lab Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-        {labs.map((lab) => (
-          <div
-            key={lab._id}
-            onClick={() => setSelectedLab(lab)}
-            className={`p-4 rounded shadow cursor-pointer transition hover:scale-105 ${
-              selectedLab?._id === lab._id ? 'bg-blue-100 border-2 border-blue-600' : 'bg-white'
-            }`}
+    return availableSlots.length === 0
+      ? <p className="text-gray-500">No available slots for this date.</p>
+      : <ul className="space-y-2">
+          {availableSlots.map((slot, i) => (
+            <li key={i} className="p-3 bg-white shadow rounded flex justify-between">
+              <span>{slot.time}</span>
+              <span className="text-green-600">Available</span>
+            </li>
+          ))}
+        </ul>;
+  };
+
+  const renderApproved = () => {
+    const approvedSlots = slotData.filter(slot => slot.status === 'Approved');
+
+    return approvedSlots.length === 0
+      ? <p className="text-gray-500">No approved bookings for this date.</p>
+      : <ul className="space-y-2">
+          {approvedSlots.map((slot, i) => (
+            <li key={i} className="p-3 bg-white shadow rounded flex justify-between">
+              <span>{slot.time}</span>
+              <span className="text-blue-600">Approved</span>
+            </li>
+          ))}
+        </ul>;
+  };
+
+  const renderHistory = () => {
+    const historyStatuses = ['Cancelled', 'Rejected', 'Completed'];
+    let historySlots = slotData.filter(slot => historyStatuses.includes(slot.status));
+
+    if (historyFilter !== 'All') {
+      historySlots = historySlots.filter(slot => slot.status === historyFilter);
+    }
+
+    return (
+      <div>
+        {/* 🔍 Filter Dropdown */}
+        <div className="mb-4">
+          <label className="mr-2 font-medium">Filter by:</label>
+          <select
+            value={historyFilter}
+            onChange={(e) => setHistoryFilter(e.target.value)}
+            className="border rounded px-3 py-1"
           >
-            <h3 className="text-lg font-semibold text-blue-700">{lab.name}</h3>
-            <p className="text-sm text-gray-600">{lab.description}</p>
-            <p className="text-xs text-gray-400 mt-1">
-              Incharge: {lab.incharge?.name} ({lab.incharge?.email})
-            </p>
-          </div>
-        ))}
-      </div>
+            <option>All</option>
+            <option>Completed</option>
+            <option>Cancelled</option>
+            <option>Rejected</option>
+          </select>
+        </div>
 
-      {/* Booked Slots */}
-      {selectedLab && (
-        <div>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Booked Slots for {selectedLab.name}</h3>
-          {bookedSlots.length === 0 ? (
-            <p className="text-gray-500">No booked slots on {selectedDate}.</p>
-          ) : (
-            <ul className="space-y-2">
-              {bookedSlots.map((slot, i) => (
-                <li key={i} className="bg-white p-3 rounded shadow border text-sm">
-                  <span className="font-semibold text-gray-700">{slot.time}</span> on <span>{slot.date}</span>
+        {historySlots.length === 0
+          ? <p className="text-gray-500">No history for this date.</p>
+          : <ul className="space-y-2">
+              {historySlots.map((slot, i) => (
+                <li key={i} className="p-3 bg-white shadow rounded flex justify-between">
+                  <div>
+                    <div className="font-semibold">{slot.time}</div>
+                    {slot.purpose && <div className="text-sm text-gray-500">Purpose: {slot.purpose}</div>}
+                  </div>
+                  <span className={{
+                    'Rejected': 'text-red-500',
+                    'Cancelled': 'text-yellow-500',
+                    'Completed': 'text-gray-500'
+                  }[slot.status]}>
+                    {slot.status}
+                  </span>
                 </li>
               ))}
-            </ul>
-          )}
+            </ul>}
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col">
+      <AdminNavbar />
+      <main className="p-6 flex-1">
+        <h1 className="text-2xl font-bold mb-4">
+          Check Allocation: <span className="text-blue-600">{labName}</span>
+        </h1>
+
+        {/* 📅 Date & Tabs */}
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <input
+            type="date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            className="border rounded px-3 py-2 shadow-sm"
+          />
+          <div className="flex gap-2">
+            {['available', 'approved', 'history'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => handleTabChange(tab)}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  activeTab === tab ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-600'
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
-      )}
-    </div>
+
+        {/* 🧾 Slot List */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-xl font-bold mb-4 capitalize">{activeTab} slots</h3>
+          {activeTab === 'available' && renderAvailable()}
+          {activeTab === 'approved' && renderApproved()}
+          {activeTab === 'history' && renderHistory()}
+        </div>
+      </main>
     </div>
   );
 };

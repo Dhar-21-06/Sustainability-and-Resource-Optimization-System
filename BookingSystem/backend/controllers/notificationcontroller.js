@@ -46,7 +46,7 @@ for (const profile of adminProfiles) {
       userId: adminUser._id,
       message: `Faculty user with ID ${userId} can now rebook the available slot for ${lab} on ${date} at ${time}.`,
       role: 'admin',
-      link: '/admin/requests'
+      link: '/admin/pending-requests'
     });
   }
  else {

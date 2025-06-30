@@ -63,7 +63,10 @@ function AdminNotification() {
     if (noti.bookingId) {
       url.searchParams.append("highlight", noti.bookingId);
     }
-    navigate(url.pathname + url.search + url.hash);
+    if (noti.link) {
+  const url = new URL(noti.link, window.location.origin);
+  navigate(url.pathname + url.search);
+}
   }
 }}
         >

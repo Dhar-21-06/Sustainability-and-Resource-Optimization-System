@@ -119,7 +119,17 @@ const closeLogoutModal = () => {
   <div
     key={idx}
     className="notif-item cursor-pointer hover:bg-blue-100 transition"
-    onClick={() => navigate(noti.link || '/faculty/notifications')}
+    onClick={() => {
+      if (noti.link) {
+        const url = new URL(noti.link, window.location.origin);
+        if (noti.bookingId) {
+          url.searchParams.append("highlight", noti.bookingId);
+        }
+        navigate(url.pathname + url.search);
+      } else {
+        navigate('/faculty/notifications');
+      }
+    }}
   >
     {noti.message}
   </div>

@@ -8,7 +8,7 @@ const bookingSchema = new mongoose.Schema({
   purpose: { type: String, required: true }, // ✅ NEW FIELD
   status: {
     type: String,
-    enum: ['Pending', 'Approved', 'Rejected', 'Cancelled'],
+    enum: ['Pending', 'Approved', 'Rejected', 'Cancelled','Completed'],
     default: 'Pending',
   },
   requestedAt: { type: Date, default: Date.now },
