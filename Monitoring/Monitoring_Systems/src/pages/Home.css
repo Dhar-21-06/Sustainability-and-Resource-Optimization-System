@@ -1,74 +1,186 @@
-/* src/pages/Home.css */
-
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-  padding: 2rem;
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
+/* Make the full page stretch correctly */
+body,
+html,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  font-family: 'Segoe UI', sans-serif;
 }
 
+/* Full dashboard layout */
+.dashboard-body {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f2f6fc;
+  overflow: hidden;
+}
 
-.dashboard-card {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
+/* Sidebar styling */
+.sidebar {
+  width: 220px;
+  background-color: #1e2a3a;
+  color: #ffffff;
+  padding: 1.5rem 1rem;
+  font-size: 1.5rem;
+  font-weight: bold;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  align-items: flex-start;
 }
 
-.dashboard-card h2 {
-  color: #2c3e50;
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-}
-
-.grafana-panel {
-  width: 100%;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 1rem;
-}
-
-.dashboard-summary {
-  font-size: 0.95rem;
-  background-color: #f9fafb;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-}
-
-.dashboard-summary h4 {
-  margin-bottom: 0.5rem;
-  font-size: 1.1rem;
-  color: #1a202c;
-}
-
-.dashboard-summary ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.dashboard-summary li {
-  margin-bottom: 0.3rem;
-  color: #4a4a4a;
-}
-
-/* src/index.css or src/App.css */
-
-html,
-body,
-#root {
+/* Main content area */
+.main-content {
+  flex: 1;
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
   height: 100%;
+  overflow-y: auto;
+}
+
+/* Title above the cards */
+.dashboard-title {
+  font-size: 2rem;
+  color: #1e2a3a;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.sidebar:hover {
+  background-color: #223449;
+}
+
+/* Cards section with water + electricity summaries */
+.cards {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.card {
+  flex: 1 1 300px;
+  background-color: #2b3e50;
+  color: #fff;
+  border-radius: 10px;
+  padding: 1.2rem;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  background-color: #3a4f66;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+.card h3 {
+  font-size: 1.3rem;
+  color: #64b5f6;
+  margin-bottom: 0.6rem;
+  transition: color 0.3s ease;
+}
+
+.card:hover h3 {
+  color: #90caf9;
+}
+
+.card p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #e3f2fd;
+  transition: color 0.3s ease;
+}
+
+.card:hover p {
+  color: #ffffff;
+}
+
+/* Grafana panels section - PRESERVED STYLING */
+.grafana-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.grafana-block {
+  background: #fff;
+  border-radius: 8px;
+  padding: 0.8rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.grafana-block:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.grafana-block h4 {
+  font-size: 1rem;
+  color: #1e2a3a;
+  text-align: center;
+  margin-bottom: 0.6rem;
+  transition: color 0.3s ease;
+}
+
+.grafana-block:hover h4 {
+  color: #1565c0; /* Bright blue on hover */
+}
+
+.grafana-block iframe {
+  flex: 1;
   width: 100%;
-  margin: 0;
+  height: 230px;
+  border: none;
+  border-radius: 6px;
+}
+
+/* Alert message styling */
+.alert-message {
+  color: red;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.info-message {
+  color: #ffeb3b;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+.dashboard-refresh-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: pointer;
   padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
-  background-color: #f4f7fa;
+  text-align: left;
+}
+
+.dashboard-refresh-btn:hover {
+  text-decoration: underline;
+  color: #90caf9;
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  color: #1e2a3a;
+  margin-bottom: 0.8rem;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.dashboard-title:hover {
+  color: #0d47a1; /* Slightly brighter blue */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
