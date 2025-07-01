@@ -1,4 +1,3 @@
-/* Make the full page stretch correctly */
 body,
 html,
 #root {
@@ -7,6 +6,7 @@ html,
   height: 100vh;
   width: 100vw;
   font-family: 'Segoe UI', sans-serif;
+  overflow: hidden; /* prevent scrollbars */
 }
 
 .dashboard-body {
@@ -14,7 +14,6 @@ html,
   height: 100vh;
   width: 100vw;
   background-color: #f2f6fc;
-  overflow: hidden;
 }
 
 .sidebar {
@@ -36,21 +35,61 @@ html,
   padding: 1rem 1.5rem;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* prevents scroll */
   height: 100%;
-  overflow: auto;
 }
 
 .dashboard-title {
   font-size: 2rem;
   color: #1e2a3a;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.5rem;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+  cursor: pointer;
 }
 
+.dashboard-title:hover {
+  color: #0d47a1;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Header with logos */
+.dashboard-header {
+  background-color: #e8f0fe;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  height: 65px;
+}
+
+.logo-group {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.logo-group img {
+  height: 45px;
+  object-fit: contain;
+  padding: 0 8px;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.logo:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 4px rgba(33, 150, 243, 0.6));
+}
+
+/* Info cards row */
 .cards {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   flex-wrap: nowrap;
+  height: 22vh; /* fits cleanly */
 }
 
 .card {
@@ -92,12 +131,13 @@ html,
   color: #ffffff;
 }
 
-/* Graph row fills remaining height */
+/* Grafana graphs */
 .grafana-row {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+  min-height: 0;
 }
 
 .grafana-block {
@@ -107,6 +147,7 @@ html,
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
+  min-height: 0;
   transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
@@ -130,7 +171,7 @@ html,
 .grafana-block iframe {
   flex: 1;
   width: 100%;
-  height: 300px; /* Restored to original */
+  min-height: 0;
   border: none;
   border-radius: 5px;
 }
@@ -149,19 +190,5 @@ html,
 
 .dashboard-refresh-btn:hover {
   text-decoration: underline;
-  color: #90caf9; /* subtle hover color */
+  color: #90caf9;
 }
-
-.dashboard-title {
-  font-size: 2rem;
-  color: #1e2a3a;
-  margin-bottom: 0.8rem;
-  transition: color 0.3s ease, text-shadow 0.3s ease;
-  cursor: pointer;
-}
-
-.dashboard-title:hover {
-  color: #0d47a1; /* Slightly brighter blue */
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-}
-

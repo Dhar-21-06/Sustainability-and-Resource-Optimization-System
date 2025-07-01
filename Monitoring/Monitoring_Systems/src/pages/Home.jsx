@@ -48,6 +48,14 @@ const Home = () => {
 
       <main className="main-content">
         <h1 className="dashboard-title">Resource Monitoring</h1>
+        <header className="dashboard-header">
+  <div className="logo-section">
+  <img src="/images/logo-cit.png" alt="CIT Logo" className="institution-logo" />
+  <img src="/images/logo-citbif.png" alt="CITBIF Logo" className="institution-logo" />
+  <img src="/images/logo-citil.png" alt="CITIL Logo" className="institution-logo" />
+</div>
+
+</header>
 
         {error && (
           <div className="error-message">

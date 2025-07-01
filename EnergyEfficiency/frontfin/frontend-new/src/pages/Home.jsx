@@ -31,18 +31,29 @@ const Home = () => {
   return (
     <div className="dashboard-body">
       <aside className="sidebar">
-  <button
-    className="dashboard-refresh-btn"
-    onClick={() => window.location.reload()}
-    title="Click to refresh dashboard"
-  >
-    IoT Dashboard
-  </button>
-</aside>
-
+        <button
+          className="dashboard-refresh-btn"
+          onClick={() => window.location.reload()}
+          title="Click to refresh dashboard"
+        >
+          IoT Dashboard
+        </button>
+      </aside>
 
       <main className="main-content">
+
+
         <h1 className="dashboard-title">Energy Overview</h1>
+
+        {/* Header Bar with Logos */}
+<header className="dashboard-header">
+  <div className="logo-group">
+    <img src="/images/cit-main-logo.png" alt="CIT" className="logo" />
+    <img src="/images/citbif-logo.png" alt="CITBIF Logo" className="logo citbif-logo" />
+    <img src="/images/citil-logo.png" alt="CITIL" className="logo" />
+  </div>
+</header>
+
 
         <div className="cards">
           <div className="card">
