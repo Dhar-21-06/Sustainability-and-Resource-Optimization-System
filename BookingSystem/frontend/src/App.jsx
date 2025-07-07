@@ -17,12 +17,13 @@ import FacultyProfile from './pages/user/profile';
 import AdminProfile from './pages/admin/profile';
 import Notifications from './pages/user/notification';
 import AdminNotification from './pages/admin/AdminNotification';
-
-
+import SystemNavigation from './pages/SystemNavigation';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
     <>
+    <Toaster position="top-right" reverseOrder={false} /> 
       <Routes>
   <Route path="/" element={<RoleSelection />} />
   <Route path="/auth/login/:role" element={<GoogleAuthPage />} />
@@ -42,7 +43,6 @@ function App() {
   <Route path="/admin/profile" element={<AdminProfile />} />
   <Route path="/faculty/notifications" element={<Notifications />} />
   <Route path="/admin/notifications" element={<AdminNotification />} />
-  <Route path="/book-an-auditorium" element={<BookAudi />} />
   
 
 </Routes>

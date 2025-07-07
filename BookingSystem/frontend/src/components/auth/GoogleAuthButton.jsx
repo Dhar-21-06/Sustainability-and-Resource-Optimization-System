@@ -22,13 +22,11 @@
     console.log("✅ Google Auth Response:", res.data);
 
     // ✅ Now fetch /me to verify token and get complete user details
-    const meRes = await axios.get(`${Backend_url}/api/auth/me`, {
+    const meRes = await axios.get('http://localhost:5000/api/auth/me', {
       withCredentials: true
     });
 
     console.log("👤 Verified user from /me:", meRes.data);
-    localStorage.setItem("user", JSON.stringify(meRes.data));
-    console.log(JSON.stringify(meRes.data, null, 2));
 
     const roleFromMe = meRes.data.role;
     if (roleFromMe === 'faculty') {

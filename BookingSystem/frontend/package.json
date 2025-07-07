@@ -30,6 +30,7 @@
     "react": "^19.1.0",
     "react-datepicker": "^8.4.0",
     "react-dom": "^19.1.0",
+    "react-hot-toast": "^2.5.2",
     "react-modal": "^3.16.3",
     "react-router-dom": "^7.6.1",
     "react-scripts": "^5.0.1",
