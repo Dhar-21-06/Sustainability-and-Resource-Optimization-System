@@ -35,11 +35,12 @@ const Book = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [hoveredSlot, setHoveredSlot] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const Backend_url = import.meta.env.VITE_BACKEND;
 
   useEffect(() => {
     const fetchLabs = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/labs");
+        const res = await axios.get(`${Backend_url}/api/labs`);
         setLabs(res.data);
       } catch (err) {
         console.error("Failed to fetch labs", err);
@@ -48,18 +49,8 @@ const Book = () => {
 
     const fetchUser = async () => {
       try {
-    const userId = JSON.parse(localStorage.getItem("user"))._id;
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      console.error("⚠️ No token found in localStorage");
-      return;
-    }
-
-    const res = await axios.get(`http://localhost:5000/api/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const res = await axios.get(`${Backend_url}:5000/api/auth/me`, {
+      withCredentials: true,
     });
 
     console.log("✅ User fetched:", res.data);
@@ -76,7 +67,7 @@ const Book = () => {
     const fetchBookings = async () => {
       if (!selectedLab || !selectedDate || !user) return;
       try {
-        const res = await axios.get(`http://localhost:5000/api/bookings/lab/${selectedLab.name}/${selectedDate}`);
+        const res = await axios.get(`${Backend_url}/api/bookings/lab/${selectedLab.name}/${selectedDate}`);
         console.log("🔄 Lab Booking Data:", res.data);
         const booked = res.data.booked || [];
         const userBooked = booked.filter(b => String(b.userId) === String(user._id)).map(b => b.time);
@@ -106,7 +97,7 @@ const Book = () => {
   if (!user || !selectedLab || !selectedDate) return;
 
   try {
-    const res = await axios.get(`http://localhost:5000/api/bookings/user/${user._id}`);
+    const res = await axios.get(`${Backend_url}/api/bookings/user/${user._id}`);
     const recent = res.data.filter(
       b =>
         b.status === 'Rejected' &&
@@ -145,15 +136,18 @@ const Book = () => {
     return;
   }
     try {
-      await axios.post("http://localhost:5000/api/bookings/request", {
+      await axios.post(`${Backend_url}/api/bookings/request`, {
         userId: user._id,
         lab: selectedLab.name,
         date: selectedDate,
         time: slotToBook,
         purpose: purposeText,
+        type: "lab",  // 👈 add this line
+      }, {
+        withCredentials: true
       });
       setSuccessMessage("Your booking request has been sent successfully.");
-setShowSuccessModal(true);
+      setShowSuccessModal(true);
       await refreshBookingData();
       setShowBookModal(false);
       setPurposeText('');
@@ -165,7 +159,7 @@ setShowSuccessModal(true);
 
 const handleUserConfirmedCancel = async () => {
   try {
-    const res = await axios.get(`http://localhost:5000/api/bookings/user/${user._id}`);
+    const res = await axios.get(`${Backend_url}/api/bookings/user/${user._id}`);
     const match = res.data.find(
       b => b.lab === selectedLab.name && b.date === selectedDate && b.time === slotToBook && b.status === 'Approved'
     );
@@ -178,7 +172,7 @@ const handleUserConfirmedCancel = async () => {
       return;
     }
 
-    await axios.patch(`http://localhost:5000/api/bookings/cancel/${match._id}`);
+    await axios.patch(`${Backend_url}/api/bookings/cancel/${match._id}`);
     setSuccessMessage("Your booking was cancelled successfully.");
 setShowSuccessModal(true);
     
@@ -197,12 +191,12 @@ setShowSuccessModal(true);
 
   const handleCancelPending = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/bookings/user/${user._id}`);
+      const res = await axios.get(`${Backend_url}/api/bookings/user/${user._id}`);
       const match = res.data.find(
         b => b.lab === selectedLab.name && b.date === selectedDate && b.time === slotToBook && b.status === 'Pending'
       );
       if (match) {
-  await axios.patch(`http://localhost:5000/api/bookings/cancel/${match._id}`);
+  await axios.patch(`${Backend_url}/api/bookings/cancel/${match._id}`);
   setSuccessMessage("Your booking request was cancelled.");
 setShowSuccessModal(true);
   setShowPendingModal(false);
@@ -222,7 +216,7 @@ setShowSuccessModal(true);
   const refreshBookingData = async () => {
   if (!selectedLab || !selectedDate || !user) return;
   try {
-    const res = await axios.get(`http://localhost:5000/api/bookings/lab/${selectedLab.name}/${selectedDate}`);
+    const res = await axios.get(`${Backend_url}/api/bookings/lab/${selectedLab.name}/${selectedDate}`);
     const booked = res.data.booked || [];
     const pending = res.data.pending || [];
 

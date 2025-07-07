@@ -17,19 +17,20 @@ const PendingRequests = () => {
   const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
   const [selectedApproveRequest, setSelectedApproveRequest] = useState(null);
   const [highlightBookingId, setHighlightBookingId] = useState(null);
-const location = useLocation();
+  const location = useLocation();
+  const Backend_url = import.meta.env.VITE_BACKEND;
 
   // 🧠 Fetch all pending bookings from backend
 const fetchPendingRequests = async () => {
   try {
     // Step 1: Get current user from /me
-    const userRes = await axios.get('http://localhost:5000/api/auth/me', {
+    const userRes = await axios.get(`${Backend_url}/api/auth/me`, {
       withCredentials: true
     });
     const userEmail = userRes.data.email;
 
     // Step 2: Send to /pending?adminEmail=...
-    const pendingRes = await axios.get('http://localhost:5000/api/bookings/pending', {
+    const pendingRes = await axios.get(`${Backend_url}/api/bookings/pending`, {
       params: { adminEmail: userEmail }
     });
 
@@ -63,7 +64,7 @@ const fetchPendingRequests = async () => {
 
   const confirmApprove = async (bookingId) => {
     try {
-      await axios.patch(`http://localhost:5000/api/bookings/approve/${bookingId}`);
+      await axios.patch(`${Backend_url}/api/bookings/approve/${bookingId}`);
       setConfirmationMessage('Booking Approved Successfully!');
       setShowConfirmation(true);
       fetchPendingRequests(); // Refresh
@@ -85,7 +86,7 @@ const fetchPendingRequests = async () => {
     }
 
     try {
-      await axios.patch(`http://localhost:5000/api/bookings/reject/${selectedRequestId}`, {
+      await axios.patch(`${Backend_url}/api/bookings/reject/${selectedRequestId}`, {
         reason: rejectReason,
       });
 
@@ -131,12 +132,13 @@ const fetchPendingRequests = async () => {
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
             <div className="bg-white p-5 rounded-lg shadow-lg text-center w-96">
               <h3 className="text-lg font-semibold text-red-700 mb-3">Rejection Reason</h3>
-              <textarea
+              <input
+                type="text"
+                placeholder="Type the reason for rejection..."
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Type the reason for rejection..."
-                className="w-full h-32 p-3 border rounded bg-gray-100 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              ></textarea>
+                className="mt-3 w-full border p-2 rounded"
+              />
               <div className="flex justify-around mt-4">
                 <button
                   onClick={confirmReject}

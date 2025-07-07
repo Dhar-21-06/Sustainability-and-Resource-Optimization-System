@@ -15,6 +15,7 @@ function Navbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const notifDropdownRef = useRef(null);
+  const Backend_url = import.meta.env.VITE_BACKEND;
 
   const navigate = useNavigate();
 
@@ -24,7 +25,7 @@ function Navbar() {
     if (!user) return;
 
     try {
-      const res = await axios.get(`http://localhost:5000/api/notifications/unread-count/${user._id}`);
+      const res = await axios.get(`${Backend_url}/api/notifications/unread-count/${user._id}`);
       setUnreadCount(res.data.count);
     } catch (err) {
       console.error("Failed to fetch unread count", err);
@@ -98,14 +99,14 @@ const closeLogoutModal = () => {
   const userId = user?._id;
 
   try {
-    const res = await axios.get(`http://localhost:5000/api/notifications/admin/${userId}`);
+    const res = await axios.get(`${Backend_url}/api/notifications/admin/${userId}`);
     setNotifications(res.data);
     setShowNotifDropdown(!showNotifDropdown);
 
     // Mark all as read
     await Promise.all(res.data.map(async (noti) => {
       if (!noti.read) {
-        await axios.patch(`http://localhost:5000/api/notifications/read/${noti._id}`);
+        await axios.patch(`${Backend_url}/api/notifications/read/${noti._id}`);
       }
     }));
 

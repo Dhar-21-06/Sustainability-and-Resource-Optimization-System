@@ -32,7 +32,7 @@ const AdminHome = () => {
     <AdminDashboardCard title="Check Allocation" description="View bookings for each lab" icon={icon2} />
   </Link>
   <Link to="/admin/upcoming-events">
-    <AdminDashboardCard title="Upcoming Events" description="View your upcoming slots live here" icon={icon3} />
+    <AdminDashboardCard title="View Upcoming Slots" description="View your upcoming slots live here" icon={icon3} />
   </Link>
 </section>
       </main>

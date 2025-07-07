@@ -25,12 +25,37 @@ const CheckAllocation = () => {
   const [showRebookSuccessModal, setShowRebookSuccessModal] = useState(false);
   const [showAlreadyBookedModal, setShowAlreadyBookedModal] = useState(false);
   const navigate = useNavigate();
-
+  const Backend_url = import.meta.env.VITE_BACKEND;
 
   const allLabs = [
-    'Gen AI Lab', 'IoT Lab', 'Rane NSK Lab', 'PEGA Lab', 'CAM Lab', 'CAD Lab',
-    'Sustainable Material and Surface Metamorphosis Lab', 'Quantum Science Lab',
-    'MRuby Lab', 'Cisco Lab', 'Aryabatta Lab', 'Innovation Lab'
+  "PEGA COE",
+  "Centre of Additive Manufacturing",
+  "CAD Lab",
+  "Centre of Sustainability Material and Surface Metamorphosis",
+  "Quantum Science Lab",
+  "Gen AI Lab",
+  "Iot COE",
+  "MRuby Research Centre",
+  "Cisco Lab",
+  "BitSpace",
+  "RANE-NSK Centre",
+  "Incubation Cell",
+  "Physics Lab",
+  "Chemistry Lab",
+  "Workshop Lab",
+  "Computer Lab",
+  "Communication Lab",
+  "Electrical & Electronics Lab",
+  "Manufacturing Technology Lab",
+  "Electrical Circuit Lab",
+  "Electron Devices Lab",
+  "Strength of Materials Lab",
+  "Fluid Mechanics & Machinery Lab",
+  "Survey Lab",
+  "Center for Data Science & Research",
+  "KUKA Center for Industrial Robotics",
+  "Shri. Parthasarathy Auditorium",
+  "Mini Auditorium and Seminar Hall"
   ];
 
   // Fetch from backend
@@ -40,7 +65,7 @@ const CheckAllocation = () => {
         const user = JSON.parse(localStorage.getItem("user"));
         if (!user) return;
 
-        const res = await axios.get(`http://localhost:5000/api/bookings/user/${user._id}`);
+        const res = await axios.get(`${Backend_url}/api/bookings/user/${user._id}`);
         const bookingsFromDB = res.data;
         const updatedBookings = bookingsFromDB;
         const withStatus = bookingsFromDB.map((b) => ({
@@ -108,12 +133,12 @@ useEffect(() => {
 
   const confirmCancellation = async () => {
     try {
-      await axios.patch(`http://localhost:5000/api/bookings/cancel/${selectedBooking.id}`);
+      await axios.patch(`${Backend_url}/api/bookings/cancel/${selectedBooking.id}`);
       setShowCancelSuccessModal(true);
 
       // Refresh
       const user = JSON.parse(localStorage.getItem("user"));
-      const res = await axios.get(`http://localhost:5000/api/bookings/user/${user._id}`);
+      const res = await axios.get(`${Backend_url}/api/bookings/user/${user._id}`);
       const refreshed = res.data.map(b => ({ ...b, id: b._id.toString() }));
       setBookings(refreshed);
 
@@ -143,6 +168,7 @@ useEffect(() => {
     const bookingDateTime = new Date(`${b.date}T${startTime}:00`);
     return bookingDateTime > new Date();
   });
+
   const pendingRequests = filteredBookings.filter(b => {
     if (b.status !== 'Pending') return false;
 
@@ -152,6 +178,7 @@ useEffect(() => {
     const expiry = new Date(slotStart.getTime() + 30 * 60 * 1000); // +30 mins
     return new Date() <= expiry; // only show non-expired pending slots
   });
+  
   const bookingHistory = filteredBookings.filter(b => {
     return ['Completed', 'Cancelled', 'Rejected'].includes(b.status);
   });
@@ -209,7 +236,7 @@ const handleRebookAttempt = (booking) => {
 const confirmRebook = async () => {
   try {
     const user = JSON.parse(localStorage.getItem("user"));
-    await axios.post("http://localhost:5000/api/bookings/request", {
+    await axios.post(`${Backend_url}/api/bookings/request`, {
       userId: user._id,
       lab: rebookedBooking.lab,
       time: rebookedBooking.time,
@@ -218,7 +245,7 @@ const confirmRebook = async () => {
     });
 
     // Refresh bookings
-    const res = await axios.get(`http://localhost:5000/api/bookings/user/${user._id}`);
+    const res = await axios.get(`${Backend_url}/api/bookings/user/${user._id}`);
     const refreshed = res.data.map(b => ({ ...b, id: b._id.toString() }));
     setBookings(refreshed);
 

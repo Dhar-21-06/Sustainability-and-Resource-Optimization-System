@@ -10,6 +10,7 @@ function Profile() {
     department: '',
     phoneNumber: ''
   });
+  const Backend_url = import.meta.env.VITE_BACKEND;
 
   useEffect(() => {
   const user = JSON.parse(localStorage.getItem('user'));
@@ -20,7 +21,7 @@ function Profile() {
       role: user.role
     }));
 
-    fetch(`http://localhost:5000/api/profile/get-profile/${user.email}`)
+    fetch(`${Backend_url}/api/profile/get-profile/${user.email}`)
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -54,7 +55,7 @@ function Profile() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/profile/save-profile', {
+      const response = await fetch(`${Backend_url}/api/profile/save-profile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

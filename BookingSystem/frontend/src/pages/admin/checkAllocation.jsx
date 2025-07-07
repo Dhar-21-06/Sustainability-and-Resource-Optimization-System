@@ -18,6 +18,7 @@ const AdminCheckAllocation = () => {
   const [activeTab, setActiveTab] = useState('available');
   const [slotData, setSlotData] = useState([]); // holds all slot info
   const [historyFilter, setHistoryFilter] = useState('All');
+  const Backend_url = import.meta.env.VITE_BACKEND;
 
   // 🧠 Set tab based on URL hash
   useEffect(() => {
@@ -37,7 +38,7 @@ const AdminCheckAllocation = () => {
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user?.email) {
-      axios.get(`http://localhost:5000/api/profile/get-profile/${user.email}`)
+      axios.get(`${Backend_url}/api/profile/get-profile/${user.email}`)
         .then(res => setLabName(res.data.labIncharge))
         .catch(err => console.error('❌ Profile fetch error:', err));
     }
@@ -49,7 +50,7 @@ useEffect(() => {
   if (!labName || !date) return;
 
     const fetchAndComputeSlots = async () => {
-      let url = `http://localhost:5000/api/bookings/lab/${encodeURIComponent(labName)}/${date}/slots`;
+      let url = `${Backend_url}/api/bookings/lab/${encodeURIComponent(labName)}/${date}/slots`;
 
       // Add status query only for 'approved' and 'history' tabs
       if (activeTab === 'approved') url += '?status=approved';

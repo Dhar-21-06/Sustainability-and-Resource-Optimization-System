@@ -3,12 +3,16 @@
   import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
   import axios from 'axios';
   import { useNavigate } from 'react-router-dom';
+  console.log("working");
+
+  const Backend_url = import.meta.env.VITE_BACKEND;
+  console.log(Backend_url);
 
   const GoogleAuthButton = ({ role }) => {
     const navigate = useNavigate();
     const handleSuccess = async (credentialResponse) => {
   try {
-    const res = await axios.post('http://localhost:5000/api/auth/google-auth', {
+    const res = await axios.post(`${Backend_url}/api/auth/google-auth`, {
       tokenId: credentialResponse.credential,
       role,
     }, {
@@ -17,16 +21,14 @@
 
     console.log("✅ Google Auth Response:", res.data);
 
-    // Optional: Save token in localStorage (but you already have cookie)
-    localStorage.setItem('user', JSON.stringify(res.data.user));
-    localStorage.setItem('token', res.data.token); // ✅ store token
-
     // ✅ Now fetch /me to verify token and get complete user details
-    const meRes = await axios.get('http://localhost:5000/api/auth/me', {
+    const meRes = await axios.get(`${Backend_url}/api/auth/me`, {
       withCredentials: true
     });
 
     console.log("👤 Verified user from /me:", meRes.data);
+    localStorage.setItem("user", JSON.stringify(meRes.data));
+    console.log(JSON.stringify(meRes.data, null, 2));
 
     const roleFromMe = meRes.data.role;
     if (roleFromMe === 'faculty') {

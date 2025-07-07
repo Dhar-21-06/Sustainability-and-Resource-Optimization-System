@@ -8,6 +8,7 @@ import icon2 from '../../assets/bookings-icon.png';
 import icon3 from '../../assets/event-icon.png';
 import { Link } from 'react-router-dom';
 import citbifLogo from '../../assets/CITBIF logo.png';
+import icon4 from '../../assets/audi-icon.png'; // new icon for auditorium
 
 const Home = () => {
   return (
@@ -32,7 +33,10 @@ const Home = () => {
     <DashboardCard title="My Bookings" description="2 Booked" icon={icon2} />
   </Link>
   <Link to="/upcoming-events">
-    <DashboardCard title="View Upcoming Events" description="Today: 3 Events" icon={icon3} />
+    <DashboardCard title="View Upcoming Slots" description="Today: 3 Events" icon={icon3} />
+  </Link>
+  <Link to="/book-an-auditorium">
+    <DashboardCard title="Book an Auditorium" description="2 Available" icon={icon4} />
   </Link>
 </section>
       </main>

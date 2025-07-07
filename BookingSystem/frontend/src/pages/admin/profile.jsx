@@ -1,6 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import bgImage from '../../assets/bg-4.jpg';
 
+const labs = [
+  "PEGA COE",
+  "Centre of Additive Manufacturing",
+  "CAD Lab",
+  "Centre of Sustainability Material and Surface Metamorphosis",
+  "Quantum Science Lab",
+  "Gen AI Lab",
+  "Iot COE",
+  "MRuby Research Centre",
+  "Cisco Lab",
+  "BitSpace",
+  "RANE-NSK Centre",
+  "Incubation Cell",
+  "Physics Lab",
+  "Chemistry Lab",
+  "Workshop Lab",
+  "Computer Lab",
+  "Communication Lab",
+  "Electrical & Electronics Lab",
+  "Manufacturing Technology Lab",
+  "Electrical Circuit Lab",
+  "Electron Devices Lab",
+  "Strength of Materials Lab",
+  "Fluid Mechanics & Machinery Lab",
+  "Survey Lab",
+  "Center for Data Science & Research",
+  "KUKA Center for Industrial Robotics",
+  "Shri. Parthasarathy Auditorium",
+  "Mini Auditorium and Seminar Hall"
+];
+
+
 function Profile() {
   const [formData, setFormData] = useState({
     email: '',
@@ -9,7 +41,8 @@ function Profile() {
     lastName: '',
     labIncharge: '',
     phoneNumber: ''
-  });
+  })
+  const Backend_url = import.meta.env.VITE_BACKEND;
 
   useEffect(() => {
   const user = JSON.parse(localStorage.getItem('user'));
@@ -20,7 +53,7 @@ function Profile() {
       role: user.role
     }));
 
-    fetch(`http://localhost:5000/api/profile/get-profile/${user.email}`)
+    fetch(`${Backend_url}/api/profile/get-profile/${user.email}`)
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -54,7 +87,7 @@ function Profile() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/profile/save-profile', {
+      const response = await fetch(`${Backend_url}/api/profile/save-profile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -152,18 +185,9 @@ function Profile() {
               className="w-full px-4 py-3 rounded-lg border border-gray-300 text-gray-800 bg-white"
             >
               <option value="" disabled>Select your Lab</option>
-              <option value="Aryabatta Lab">Aryabatta Lab</option>
-              <option value="CAD Lab">CAD Lab</option>
-              <option value="CAM Lab">CAM Lab</option>
-              <option value="Cisco Lab">Cisco Lab</option>
-              <option value="Gen AI Lab">Gen AI Lab</option>
-              <option value="Innovation Lab">Innovation Lab</option>
-              <option value="IoT Lab">IoT Lab</option>
-              <option value="MRuby Lab">MRuby Lab</option>
-              <option value="PEGA Lab">PEGA Lab</option>
-              <option value="Quantum Science Lab">Quantum Science Lab</option>
-              <option value="Rane NSK Lab">Rane NSK Lab</option>
-              <option value="Sustainable Material and Surface Metamorphosis Lab">Sustainable Material and Surface Metamorphosis Lab</option>
+              {labs.map(lab => (
+                <option key={lab} value={lab}>{lab}</option>
+              ))}
             </select>
           </div>
 

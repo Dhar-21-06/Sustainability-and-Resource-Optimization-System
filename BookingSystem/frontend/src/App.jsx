@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Home from './pages/user/home';
+import BookAudi from './pages/user/bookAudi';
 import Book from './pages/user/book'; // Create simple components for each
 import Bookings from './pages/user/bookings';
 import Status from './pages/user/status';
@@ -41,6 +42,7 @@ function App() {
   <Route path="/admin/profile" element={<AdminProfile />} />
   <Route path="/faculty/notifications" element={<Notifications />} />
   <Route path="/admin/notifications" element={<AdminNotification />} />
+  <Route path="/book-an-auditorium" element={<BookAudi />} />
   
 
 </Routes>

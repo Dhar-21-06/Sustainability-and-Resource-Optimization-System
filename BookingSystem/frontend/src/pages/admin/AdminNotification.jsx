@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import AdminNavbar from '../../components/common/admin_c/AdminNavbar';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+const Backend_url = import.meta.env.VITE_BACKEND;
 
 function AdminNotification() {
   const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
   const handleClearAll = async () => {
   const user = JSON.parse(localStorage.getItem('user'));
-  await axios.delete(`http://localhost:5000/api/notifications/user/${user._id}`);
+  await axios.delete(`${Backend_url}/api/notifications/user/${user._id}`);
   setNotifications([]);
 };
 
@@ -16,18 +17,18 @@ function AdminNotification() {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const userRes = await axios.get('http://localhost:5000/api/auth/me', {
+        const userRes = await axios.get(`${Backend_url}/api/auth/me`, {
           withCredentials: true
         });
 
         const userId = userRes.data._id;
 
-        const res = await axios.get(`http://localhost:5000/api/notifications/admin/${userId}`);
+        const res = await axios.get(`${Backend_url}/api/notifications/admin/${userId}`);
         setNotifications(res.data);
 
         const unreadIds = res.data.filter(n => !n.read).map(n => n._id);
         if (unreadIds.length) {
-          await axios.patch(`http://localhost:5000/api/notifications/mark-as-read/${userId}`);
+          await axios.patch(`${Backend_url}/api/notifications/mark-as-read/${userId}`);
           setNotifications(prev => prev.map(n => ({ ...n, read: true })));
         }
       } catch (err) {
@@ -87,7 +88,7 @@ function AdminNotification() {
           <button
             onClick={async (e) => {
               e.stopPropagation();
-              await axios.delete(`http://localhost:5000/api/notifications/${noti._id}`);
+              await axios.delete(`${Backend_url}/api/notifications/${noti._id}`);
               setNotifications((prev) => prev.filter((n) => n._id !== noti._id));
             }}
             className="text-red-500 text-lg font-bold ml-3"

@@ -6,30 +6,29 @@ import { useNavigate } from 'react-router-dom';
 function Notification() {
   const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
+  const Backend_url = import.meta.env.VITE_BACKEND;
   const handleClearAll = async () => {
   const user = JSON.parse(localStorage.getItem('user'));
-  await axios.delete(`http://localhost:5000/api/notifications/user/${user._id}`);
+  await axios.delete(`${Backend_url}/api/notifications/user/${user._id}`);
   setNotifications([]);
 };
 
 useEffect(() => {
   const fetchNotifications = async () => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const userId = user?._id;
+    const userRes = await axios.get(`${Backend_url}/api/auth/me`, {
+      withCredentials: true
+    });
 
-    if (!userId) {
-      console.error("User ID not found in localStorage");
-      return;
-    }
+    const userId = userRes.data._id;
 
     try {
-      const res = await axios.get(`http://localhost:5000/api/notifications/user/${userId}`);
+      const res = await axios.get(`${Backend_url}/api/notifications/user/${userId}`);
       setNotifications(res.data);
 
       // ✅ Mark unread notifications as read and locally update their state
       const unreadIds = res.data.filter(n => !n.read).map(n => n._id);
       if (unreadIds.length) {
-        await axios.patch(`http://localhost:5000/api/notifications/mark-as-read/${userId}`);
+        await axios.patch(`${Backend_url}/api/notifications/mark-as-read/${userId}`);
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       }
     } catch (err) {
@@ -43,7 +42,7 @@ useEffect(() => {
   const interval = setInterval(() => {
     const user = JSON.parse(localStorage.getItem('user'));
     if (user?.role !== 'faculty') return;
-    axios.get('http://localhost:5000/api/notifications/pre-slot-alerts')
+    axios.get(`${Backend_url}/api/notifications/pre-slot-alerts`)
       .then(res => console.log("⏰ Slot alert check done"))
       .catch(err => console.error("⛔ Slot alert error", err));
   }, 60000); // every 60 seconds
@@ -115,7 +114,7 @@ useEffect(() => {
           <button
             onClick={async (e) => {
               e.stopPropagation();
-              await axios.delete(`http://localhost:5000/api/notifications/${noti._id}`);
+              await axios.delete(`${Backend_url}/api/notifications/${noti._id}`);
               setNotifications((prev) => prev.filter((n) => n._id !== noti._id));
             }}
             className="text-red-500 text-lg font-bold ml-3"
