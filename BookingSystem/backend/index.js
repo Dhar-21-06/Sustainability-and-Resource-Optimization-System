@@ -10,6 +10,7 @@ const notificationRoutes = require('./routes/notificationroutes');
 const resetBlockedSlots = require('./controllers/resetBlockedSlots');
 const labRoutes = require("./routes/labroutes");
 const profileRoutes = require('./routes/profileroutes');
+const BACKEND = process.env.BACKEND;
 
 // Run once on server startup
 resetBlockedSlots();
@@ -28,7 +29,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: "http://localhost:3000",
   credentials: true
 }));
 
@@ -46,12 +47,13 @@ app.get('/', (req, res) => {
 
 // DB & Server
 const PORT = process.env.PORT || 5000;
+const HOST = '0.0.0.0';
 mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })
   .then(() => {
     console.log('✅ Connected to MongoDB');
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+    app.listen(PORT, HOST, () => console.log(`🚀 Server running at http://${HOST}:${PORT}`));
   })
   .catch((err) => console.error('❌ MongoDB connection failed:', err));

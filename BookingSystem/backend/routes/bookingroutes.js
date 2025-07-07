@@ -18,9 +18,13 @@ router.patch('/mark-completed', async (req, res) => {
   }
 });
 
-// 📌 User requests a slot
+// 📌 User requests a slot (supports lab and auditorium)
 router.post('/request', async (req, res) => {
-  const { userId, lab, date, time, purpose } = req.body;
+  const { userId, lab, date, time, purpose, type } = req.body;
+
+  if (!['lab', 'auditorium'].includes(type)) {
+    return res.status(400).json({ message: 'Invalid booking type' });
+  }
 
   try {
     console.log("🛬 Incoming booking request:", req.body);
@@ -29,6 +33,7 @@ router.post('/request', async (req, res) => {
       lab,
       date,
       time,
+      type,
       status: 'Approved'
     });
 
@@ -42,6 +47,7 @@ router.post('/request', async (req, res) => {
       lab,
       date,
       time,
+      type,
       status: 'Rejected'
     }).sort({ rejectionTimestamp: -1 });
 
@@ -53,11 +59,12 @@ router.post('/request', async (req, res) => {
       }
     }
 
-    // ✅ Still allow multiple users to request pending
+    // ✅ Check duplicate pending
     const existingPending = await Booking.findOne({
       lab,
       date,
       time,
+      type,
       status: 'Pending',
       userId,
     });
@@ -67,31 +74,29 @@ router.post('/request', async (req, res) => {
     }
 
     // ✅ Create new booking
-    const newBooking = new Booking({ userId, lab, date, time, purpose });
+    const newBooking = new Booking({ userId, lab, date, time, purpose, type });
     await newBooking.save();
 
-    // ✅ Ensure the slot exists and remains available until approval
+    // ✅ Ensure slot entry exists
     await Slot.findOneAndUpdate(
       { lab, date, time },
       { $setOnInsert: { isAvailable: true } },
       { upsert: true }
     );
 
-
-    // ✅ Notification to Admins
+    // ✅ Send notification to relevant incharges
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    console.log("✅ Matching admin profiles for lab:", lab);
     const labName = lab.trim().toLowerCase();
-    const profiles = await Profile.find({ role: 'admin', labIncharge: { $regex: new RegExp(`^${labName}$`, 'i') } });
-    console.log("✅ Matched profiles:", profiles.map(p => p.email));
-    console.log("📌 User data:", user);
 
+    let profileQuery = { role: 'admin' };
+    profileQuery.labIncharge = { $regex: new RegExp(`^${labName}$`, 'i') };
+    console.log("🔎 Looking for admins with labIncharge:", labName);
+
+    const profiles = await Profile.find(profileQuery);
+    console.log("🧾 Matched admins:", profiles.map(p => `${p.firstName} (${p.email})`));
     const msg = `${user.name} has requested a booking for ${lab} on ${date} at ${time}. Purpose: ${purpose}`;
-
 
     for (const profile of profiles) {
       const admin = await User.findOne({ email: profile.email });
@@ -114,7 +119,6 @@ router.post('/request', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
-
 
 // 📌 Cancel a booking (user)
 router.patch('/cancel/:id', async (req, res) => {
@@ -147,7 +151,6 @@ router.patch('/cancel/:id', async (req, res) => {
             userId: admin._id,
             message: msg,
             role: 'admin',
-            link: '',
             bookingId: booking._id 
           });
         }
@@ -251,11 +254,10 @@ router.patch('/reject/:id', async (req, res) => {
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
 
     booking.status = 'Rejected';
-    const rejectedAt = booking.rejectionTimestamp ? new Date(booking.rejectionTimestamp) : null;
-    if (!rejectedAt) return; // or show fallback
-
+    booking.rejectionTimestamp = new Date(); // ✅ Always set this
     booking.rejectionReason = reason || 'Rejected by admin';
     await booking.save();
+
     const user = await User.findById(booking.userId);
 
     const msg = `❌ Hi ${user.name}, Your booking for ${booking.lab} on ${booking.date} at ${booking.time} was rejected.\nReason: ${reason}`;
@@ -545,15 +547,45 @@ router.get('/slots/:labName', async (req, res) => {
 // 📌 Get all upcoming approved bookings (used for Upcoming Events)
 router.get('/upcoming', async (req, res) => {
   try {
-    const upcoming = await Booking.find({ status: 'Approved' })
-      .populate('userId', 'name')  // populate user's name
+    const bookings = await Booking.find({ status: 'Approved' })
+      .populate('userId', 'name email') // populate name and email from User
       .sort({ date: 1, time: 1 });
 
-    res.json(upcoming);
+    const enriched = await Promise.all(
+      bookings.map(async (booking) => {
+        const userEmail = booking.userId?.email;
+        let profile = null;
+
+        if (userEmail) {
+          profile = await Profile.findOne({ email: userEmail });
+        } else {
+          console.warn(`No email found for booking ID ${booking._id}`);
+        }
+
+        return {
+          _id: booking._id,
+          lab: booking.lab,
+          date: booking.date,
+          time: booking.time,
+          purpose: booking.purpose,
+          userId: {
+            name: booking.userId?.name || 'N/A',
+            email: profile?.email || userEmail || 'N/A',
+            phone: profile?.phoneNumber || 'N/A',
+            department: profile?.department || 'N/A',
+          },
+        };
+      })
+    );
+
+    res.json(enriched);
   } catch (err) {
+    console.error('Error in /upcoming route:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
+
+
 
 // 📌 Get all slots for a lab on a specific date, including isAvailable flag
 
@@ -596,5 +628,22 @@ router.get('/notifications/:userId', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 });
+
+router.get('/labs/auditorium/:lab/:date', async (req, res) => {
+  const { lab, date } = req.params;
+  try {
+    const bookings = await Booking.find({ lab, date, type: 'auditorium' });
+
+    const booked = bookings.filter(b => b.status === 'Approved');
+    const pending = bookings.filter(b => b.status === 'Pending');
+
+    res.json({ booked, pending });
+    console.log("🔍 Fetching bookings for:", lab, date);
+  } catch (err) {
+    console.error("Failed to fetch auditorium bookings:", err);
+    res.status(500).json({ message: 'Error fetching bookings' });
+  }
+});
+
 
 module.exports = router;
