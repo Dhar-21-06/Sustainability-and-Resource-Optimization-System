@@ -6,7 +6,8 @@
   console.log("working");
 
   const Backend_url = import.meta.env.VITE_BACKEND;
-  console.log(Backend_url);
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
 
   const GoogleAuthButton = ({ role }) => {
     const navigate = useNavigate();
@@ -45,7 +46,7 @@
 };
 
     return (
-      <GoogleOAuthProvider clientId="850633048309-6m4iriht6aq14t4p3l64arnilkr19rsc.apps.googleusercontent.com">
+      <GoogleOAuthProvider clientId={clientId}>
         <GoogleLogin
           onSuccess={handleSuccess}
           onError={() => {
