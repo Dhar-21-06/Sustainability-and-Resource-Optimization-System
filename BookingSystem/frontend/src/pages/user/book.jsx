@@ -414,6 +414,12 @@ setShowSuccessModal(true);
               placeholder="Enter purpose"
               value={purposeText}
               onChange={(e) => setPurposeText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault(); // prevent form reload
+                  handleBook();       // call your booking function
+                }
+              }}
               className="mt-3 w-full border p-2 rounded"
             />
             <div className="flex justify-end gap-3 mt-4">

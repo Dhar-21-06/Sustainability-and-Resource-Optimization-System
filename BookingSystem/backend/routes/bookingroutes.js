@@ -547,35 +547,43 @@ router.get('/slots/:labName', async (req, res) => {
 // 📌 Get all upcoming approved bookings (used for Upcoming Events)
 router.get('/upcoming', async (req, res) => {
   try {
+    const now = new Date();
+
     const bookings = await Booking.find({ status: 'Approved' })
-      .populate('userId', 'name email') // populate name and email from User
+      .populate('userId', 'name email')
       .sort({ date: 1, time: 1 });
 
     const enriched = await Promise.all(
-      bookings.map(async (booking) => {
-        const userEmail = booking.userId?.email;
-        let profile = null;
+      bookings
+        .filter(booking => {
+          // Combine date + time into a single datetime
+          const bookingDateTime = new Date(`${booking.date}T${booking.time}`);
+          return bookingDateTime > now;
+        })
+        .map(async (booking) => {
+          const userEmail = booking.userId?.email;
+          let profile = null;
 
-        if (userEmail) {
-          profile = await Profile.findOne({ email: userEmail });
-        } else {
-          console.warn(`No email found for booking ID ${booking._id}`);
-        }
+          if (userEmail) {
+            profile = await Profile.findOne({ email: userEmail });
+          } else {
+            console.warn(`No email found for booking ID ${booking._id}`);
+          }
 
-        return {
-          _id: booking._id,
-          lab: booking.lab,
-          date: booking.date,
-          time: booking.time,
-          purpose: booking.purpose,
-          userId: {
-            name: booking.userId?.name || 'N/A',
-            email: profile?.email || userEmail || 'N/A',
-            phone: profile?.phoneNumber || 'N/A',
-            department: profile?.department || 'N/A',
-          },
-        };
-      })
+          return {
+            _id: booking._id,
+            lab: booking.lab,
+            date: booking.date,
+            time: booking.time,
+            purpose: booking.purpose,
+            userId: {
+              name: booking.userId?.name || 'N/A',
+              email: profile?.email || userEmail || 'N/A',
+              phone: profile?.phoneNumber || 'N/A',
+              department: profile?.department || 'N/A',
+            },
+          };
+        })
     );
 
     res.json(enriched);
@@ -584,7 +592,6 @@ router.get('/upcoming', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
-
 
 
 // 📌 Get all slots for a lab on a specific date, including isAvailable flag
@@ -600,7 +607,7 @@ router.get('/lab/:lab/:date/slots', async (req, res) => {
     query.status = { $in: ['Cancelled', 'Rejected', 'Completed'] };
   }
 
-  const bookings = await Booking.find(query);
+  const bookings = await Booking.find(query).populate('user', 'name email');
   res.json(bookings);
 });
 
@@ -629,19 +636,25 @@ router.get('/notifications/:userId', async (req, res) => {
   }
 });
 
-router.get('/labs/auditorium/:lab/:date', async (req, res) => {
-  const { lab, date } = req.params;
+router.get("/labs/auditorium/:name/:date", async (req, res) => {
+  const { name, date } = req.params;
   try {
-    const bookings = await Booking.find({ lab, date, type: 'auditorium' });
+    const bookings = await Booking.find({
+      lab: decodeURIComponent(name),
+      date
+    }).populate('userId', 'name email');
 
-    const booked = bookings.filter(b => b.status === 'Approved');
-    const pending = bookings.filter(b => b.status === 'Pending');
+    const grouped = {
+      booked: bookings.filter(b => b.status === 'Approved'),
+      completed: bookings.filter(b => b.status === 'Completed'),
+      cancelled: bookings.filter(b => b.status === 'Cancelled'),
+      rejected: bookings.filter(b => b.status === 'Rejected'),
+      pending: bookings.filter(b => b.status === 'Pending'),
+    };
 
-    res.json({ booked, pending });
-    console.log("🔍 Fetching bookings for:", lab, date);
+    res.json(grouped);
   } catch (err) {
-    console.error("Failed to fetch auditorium bookings:", err);
-    res.status(500).json({ message: 'Error fetching bookings' });
+    res.status(500).json({ error: 'Failed to fetch auditorium bookings' });
   }
 });
 

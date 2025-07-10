@@ -8,8 +8,7 @@ const DEFAULT_SLOTS = [
   "10:00-11:00",
   "11:00-12:00",
   "13:00-14:00",
-  "14:00-15:00",
-  "15:00-16:00"
+  "14:00-15:00"
 ];
 
 const AdminCheckAllocation = () => {
@@ -44,56 +43,146 @@ const AdminCheckAllocation = () => {
     }
   }, []);
 
-  // 📦 Fetch bookings for lab+date and compute slot status
 // 📦 Fetch bookings based on tab
 useEffect(() => {
   if (!labName || !date) return;
 
-    const fetchAndComputeSlots = async () => {
-      let url = `${Backend_url}/api/bookings/lab/${encodeURIComponent(labName)}/${date}/slots`;
+  const fetchAndComputeSlots = async () => {
+    const isAuditorium = labName.toLowerCase().includes("auditorium");
+    let url = '';
 
-      // Add status query only for 'approved' and 'history' tabs
-      if (activeTab === 'approved') url += '?status=approved';
-      else if (activeTab === 'history') url += '?status=history';
+    if (isAuditorium) {
+      url = `${Backend_url}/api/bookings/labs/auditorium/${encodeURIComponent(labName)}/${date}`;
+    } else if (activeTab === 'history') {
+      url = `${Backend_url}/api/bookings/lab/${encodeURIComponent(labName)}/${date}/slots?status=history`;
+    } else {
+      url = `${Backend_url}/api/bookings/lab/${encodeURIComponent(labName)}/${date}/slots`;
+    }
 
+    try {
       const res = await axios.get(url);
-      const bookings = res.data;
+      let bookings = [];
 
-      // For 'available', remove Approved and Completed slots
-      if (activeTab === 'available') {
-        const blockedTimes = bookings
-          .filter(b => ['Approved', 'Completed'].includes(b.status))
-          .map(b => b.time);
+      if (isAuditorium) {
+        if (activeTab === 'available') {
+          const blockedTimes = bookings
+            .filter(b => ['approved', 'completed'].includes(b.status))
+            .map(b => b.time);
 
-        const availableSlots = DEFAULT_SLOTS
-          .filter(time => !blockedTimes.includes(time))
-          .map(time => ({
-            time,
-            status: 'Available',
-            isAvailable: true
+          const availableSlots = DEFAULT_SLOTS
+            .filter(time => !blockedTimes.includes(time))
+            .map(time => ({
+              time,
+              status: 'available',
+              isAvailable: true
+            }));
+
+          setSlotData(availableSlots);
+          return;
+        }
+        if (activeTab === 'approved') {
+          bookings = res.data.booked;
+
+          const mapped = bookings.map(b => ({
+            time: b.time || 'N/A',
+            lab: b.lab || labName,
+            status: b.status,
+            purpose: b.purpose,
+            updatedAt: b.updatedAt,
+            userName: b.userId?.name || 'Unknown',
+            userEmail: b.userId?.email || '',
           }));
 
-        setSlotData(availableSlots);
-        return;
+          setSlotData(mapped);
+          return;
+        }
+
+        else if (activeTab === 'history') {
+          bookings = [
+            ...res.data.cancelled,
+            ...res.data.rejected,
+            ...res.data.completed
+          ];
+
+          const mapped = bookings.map(b => ({
+            time: b.time || 'N/A',
+            lab: b.lab || labName,
+            status: b.status,
+            purpose: b.purpose,
+            updatedAt: b.updatedAt,
+            isAvailable: false,
+            userName: b.userId?.name || 'Unknown',
+            userEmail: b.userId?.email || '',
+          }));
+
+          setSlotData(mapped);
+          return;
+        }
+      } else {
+        bookings = res.data;
       }
 
-      // For other tabs (approved/history), map full slot info
-      const slots = DEFAULT_SLOTS.map(time => {
-        const booking = bookings.find(b => b.time === time);
-        if (!booking) return { time, status: 'Available', isAvailable: true };
+      // 💡 LABS ONLY: Handle available/approved/history
+      if (!isAuditorium) {
+        if (activeTab === 'available') {
+          const blockedTimes = bookings
+            .filter(b => ['Approved', 'Completed'].includes(b.status))
+            .map(b => b.time);
 
-        return {
-          time,
-          status: booking.status,
-          purpose: booking.purpose,
-          isAvailable: !['Approved', 'Completed'].includes(booking.status)
-        };
-      });
+          const availableSlots = DEFAULT_SLOTS
+            .filter(time => !blockedTimes.includes(time))
+            .map(time => ({
+              time,
+              status: 'available',
+              isAvailable: true
+            }));
 
-      setSlotData(slots);
-    };
+          setSlotData(availableSlots);
+          return;
+        }
+
+        let slots = DEFAULT_SLOTS.map(time => {
+          const booking = bookings.find(b => b.time === time);
+          if (!booking) return { time, status: 'available', isAvailable: true };
+
+          return {
+            time,
+            status: booking.status,
+            purpose: booking.purpose,
+            isAvailable: !['approved', 'completed'].includes(booking.status),
+            userName: booking.user?.name || booking.userId?.name || 'Unknown',
+            userEmail: booking.user?.email || booking.userId?.email || '',
+            updatedAt: booking.updatedAt
+          };
+        });
+
+        // Append extra non-default time bookings
+        if (activeTab === 'history') {
+          const extra = bookings
+            .filter(b => !DEFAULT_SLOTS.includes(b.time))
+            .map(b => ({
+              time: b.time || 'N/A',
+              status: b.status,
+              purpose: b.purpose,
+              isAvailable: false,
+              userName: b.user?.name || b.userId?.name || 'Unknown',
+              userEmail: b.user?.email || b.userId?.email || '',
+              updatedAt: b.updatedAt
+            }));
+          slots = [...slots, ...extra];
+        }
+
+        setSlotData(slots);
+      }
+
+    } catch (err) {
+      console.error("❌ Fetch slot data error:", err);
+    }
+  };
+
   fetchAndComputeSlots();
 }, [labName, date, activeTab]);
+
 
   const renderAvailable = () => {
     const availableSlots = slotData.filter(slot => slot.isAvailable);
@@ -102,30 +191,41 @@ useEffect(() => {
       ? <p className="text-gray-500">No available slots for this date.</p>
       : <ul className="space-y-2">
           {availableSlots.map((slot, i) => (
-            <li key={i} className="p-3 bg-white shadow rounded flex justify-between">
-              <span>{slot.time}</span>
-              <span className="text-green-600">Available</span>
+            <li key={i} className="p-3 bg-white dark:bg-gray-700 shadow rounded flex justify-between">
+              <span className="font-medium dark:text-white">{slot.time}</span>
+              <span className="text-green-600 dark:text-green-400">Available</span>
             </li>
           ))}
         </ul>;
   };
 
   const renderApproved = () => {
-    const approvedSlots = slotData.filter(slot => slot.status === 'Approved');
+    if (!slotData || slotData.length === 0) {
+      return <p className="text-gray-500">No approved bookings for this date.</p>;
+    }
 
-    return approvedSlots.length === 0
-      ? <p className="text-gray-500">No approved bookings for this date.</p>
-      : <ul className="space-y-2">
-          {approvedSlots.map((slot, i) => (
-            <li key={i} className="p-3 bg-white shadow rounded flex justify-between">
-              <div>
-                <div className="font-semibold">{slot.time}</div>
-                  {slot.purpose && <div className="text-sm text-gray-500">Purpose: {slot.purpose}</div>}
+    return (
+      <ul className="space-y-2">
+        {slotData.map((slot, i) => (
+          <li key={i} className="p-3 bg-white dark:bg-gray-700 shadow rounded flex justify-between">
+            <div>
+              <div className="font-semibold">Slot: {slot.time}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">Lab: {slot.lab}</div>
+                {slot.purpose && (
+                  <div className="text-sm text-gray-500 dark:text-gray-300">Purpose: {slot.purpose}</div>
+                )}
+                <div className="text-sm text-gray-500 dark:text-gray-300">
+                  By: {slot.userName} ({slot.userEmail || 'No email'})
                 </div>
-              <span className="text-blue-600">Approved</span>
-            </li>
-          ))}
-        </ul>;
+                <div className="text-sm text-gray-400 dark:text-gray-400">
+                  At: {slot.updatedAt ? new Date(slot.updatedAt).toLocaleString() : 'Unknown time'}
+                </div>
+            </div>
+            <span className="text-blue-600">Approved</span>
+          </li>
+        ))}
+      </ul>
+    );
   };
 
   const renderHistory = () => {
@@ -144,7 +244,7 @@ useEffect(() => {
           <select
             value={historyFilter}
             onChange={(e) => setHistoryFilter(e.target.value)}
-            className="border rounded px-3 py-1"
+            className="border rounded px-3 py-1 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
           >
             <option>All</option>
             <option>Completed</option>
@@ -157,10 +257,11 @@ useEffect(() => {
           ? <p className="text-gray-500">No history for this date.</p>
           : <ul className="space-y-2">
               {historySlots.map((slot, i) => (
-                <li key={i} className="p-3 bg-white shadow rounded flex justify-between">
+                <li key={i} className="p-3 bg-white dark:bg-gray-700 shadow rounded flex justify-between">
                   <div>
                     <div className="font-semibold">{slot.time}</div>
-                    {slot.purpose && <div className="text-sm text-gray-500">Purpose: {slot.purpose}</div>}
+                    {slot.purpose && <div className="text-sm text-gray-500 dark:text-gray-300">Purpose: {slot.purpose}</div>}
+                    <div className="text-sm text-gray-500 dark:text-gray-300">By: {slot.userName} ({slot.userEmail || 'No email'})</div>
                   </div>
                   <span className={{
                     'Rejected': 'text-red-500',
@@ -177,12 +278,12 @@ useEffect(() => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col text-gray-800 dark:text-gray-100">
         <AdminNavbar />
 
         <main className="p-6 flex-1 mt-20">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
               Check Allocation: <span className="text-blue-600">{labName}</span>
             </h1>
           </div>
@@ -193,7 +294,7 @@ useEffect(() => {
             type="date"
             value={date}
             onChange={e => setDate(e.target.value)}
-            className="border rounded px-3 py-2 shadow-sm"
+            className="border rounded px-3 py-2 shadow-sm dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600"
           />
           <div className="flex gap-2">
             {['available', 'approved', 'history'].map(tab => (
@@ -201,7 +302,7 @@ useEffect(() => {
                 key={tab}
                 onClick={() => handleTabChange(tab)}
                 className={`px-4 py-2 rounded-lg font-medium ${
-                  activeTab === tab ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-600'
+                  activeTab === tab ? 'bg-blue-600 text-white' : 'bg-white text-blue-600 border border-blue-600 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-400'
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -211,7 +312,7 @@ useEffect(() => {
         </div>
 
         {/* 🧾 Slot List */}
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h3 className="text-xl font-bold mb-4 capitalize">{activeTab} slots</h3>
           {activeTab === 'available' && renderAvailable()}
           {activeTab === 'approved' && renderApproved()}

@@ -41,7 +41,7 @@ function AdminNotification() {
 
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <AdminNavbar />
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
@@ -55,21 +55,18 @@ function AdminNotification() {
       {notifications.map((noti, idx) => (
         <li
           key={idx}
-          className={`p-3 border rounded text-gray-800 shadow cursor-pointer transition flex justify-between items-center ${
-            !noti.read ? 'bg-blue-100' : 'bg-white'
-          }`}
+          className={`p-3 border rounded shadow cursor-pointer transition flex justify-between items-center ${
+            !noti.read ? 'bg-blue-100 dark:bg-blue-900' : 'bg-white dark:bg-gray-800'
+          } text-gray-800 dark:text-gray-100`}
           onClick={() => {
-  if (noti.link) {
-    const url = new URL(noti.link, window.location.origin);
-    if (noti.bookingId) {
-      url.searchParams.append("highlight", noti.bookingId);
-    }
-    if (noti.link) {
-  const url = new URL(noti.link, window.location.origin);
-  navigate(url.pathname + url.search);
-}
-  }
-}}
+            if (noti.link) {
+              const url = new URL(noti.link, window.location.origin);
+              if (noti.bookingId) {
+                url.searchParams.append("highlight", noti.bookingId);
+              }
+              navigate(url.pathname + url.search);
+            }
+          }}
         >
           <div className="flex flex-col">
             <span>{noti.message}</span>

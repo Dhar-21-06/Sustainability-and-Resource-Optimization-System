@@ -54,11 +54,12 @@ useEffect(() => {
 
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Navbar />
     <div className="p-6 max-w-3xl mx-auto">
   <div className="flex items-center justify-between mb-6">
-  <h1 className="text-3xl font-bold text-blue-800">Your Notifications</h1>
+  <h1 className="text-3xl font-bold text-blue-800 dark:text-white">Your Notifications</h1>
+  <hr className="my-2 border-gray-300 dark:border-gray-600" />
 </div>
 
   {notifications.length === 0 ? (
@@ -69,9 +70,9 @@ useEffect(() => {
       {notifications.map((noti, idx) => (
         <li
           key={idx}
-          className={`p-3 border rounded text-gray-800 shadow cursor-pointer transition flex justify-between items-center ${
-            !noti.read ? 'bg-blue-100' : 'bg-white'
-          }`}
+          className={`p-3 border rounded shadow cursor-pointer transition flex justify-between items-center
+            ${!noti.read ? 'bg-blue-100 dark:bg-gray-800' : 'bg-white dark:bg-gray-900'}
+            text-gray-800 dark:text-gray-100 border-gray-300 dark:border-gray-700`}
           onClick={() => {
             if (noti.link) {
               // Construct full URL
@@ -117,7 +118,7 @@ useEffect(() => {
               await axios.delete(`${Backend_url}/api/notifications/${noti._id}`);
               setNotifications((prev) => prev.filter((n) => n._id !== noti._id));
             }}
-            className="text-red-500 text-lg font-bold ml-3"
+            className="text-red-600 dark:text-red-400 text-lg font-bold ml-3 hover:text-red-800 dark:hover:text-red-300"
           >
             ×
           </button>
@@ -129,7 +130,7 @@ useEffect(() => {
     <div className="flex justify-end mt-6">
       <button
         onClick={handleClearAll}
-        className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+        className="px-3 py-1.5 bg-blue-600 dark:bg-blue-700 text-white text-sm rounded hover:bg-blue-700 dark:hover:bg-blue-600"
       >
         Clear All Notifications
       </button>

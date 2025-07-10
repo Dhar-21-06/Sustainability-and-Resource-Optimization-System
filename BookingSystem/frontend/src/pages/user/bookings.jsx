@@ -164,20 +164,36 @@ useEffect(() => {
   const currentBookings = filteredBookings.filter(b => {
     if (b.status !== 'Approved') return false;
 
-    const [startTime] = b.time.split('-');
-    const bookingDateTime = new Date(`${b.date}T${startTime}:00`);
-    return bookingDateTime > new Date();
+    try {
+      const [startTime] = b.time.split('-');
+      let [hour, minute] = startTime.trim().split(':');
+      hour = hour.padStart(2, '0');  // pad "9" => "09"
+      minute = minute.padStart(2, '0');
+      const bookingDateTime = new Date(`${b.date}T${hour}:${minute}:00`);
+      return bookingDateTime > new Date();
+    } catch (err) {
+      console.warn("⏳ Skipped invalid time format (current):", b.time);
+      return true; // still show if time can't be parsed (e.g., auditorium)
+    }
   });
 
   const pendingRequests = filteredBookings.filter(b => {
     if (b.status !== 'Pending') return false;
 
-    // Check if slot is still within 30 min of start time
-    const [startTime] = b.time.split('-');
-    const slotStart = new Date(`${b.date}T${startTime.trim()}:00`);
-    const expiry = new Date(slotStart.getTime() + 30 * 60 * 1000); // +30 mins
-    return new Date() <= expiry; // only show non-expired pending slots
+    try {
+      const [startTime] = b.time.split('-');
+      let [hour, minute] = startTime.trim().split(':');
+      hour = hour.padStart(2, '0');
+      minute = minute.padStart(2, '0');
+      const bookingDateTime = new Date(`${b.date}T${hour}:${minute}:00`);
+      const expiry = new Date(bookingDateTime.getTime() + 60 * 60 * 1000); // 1hr
+      return new Date() <= expiry;
+    } catch (err) {
+      console.warn("⏳ Skipped invalid time format (pending):", b.time, err.message);
+      return true; // Show irregulars just in case
+    }
   });
+
   
   const bookingHistory = filteredBookings.filter(b => {
     return ['Completed', 'Cancelled', 'Rejected'].includes(b.status);

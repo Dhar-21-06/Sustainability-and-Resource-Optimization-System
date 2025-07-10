@@ -103,13 +103,13 @@ const fetchPendingRequests = async () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
       <AdminNavbar />
-      <main className="flex-grow p-6 bg-gray-100">
-        <h1 className="text-2xl font-semibold text-blue-800 mb-6">Pending Requests</h1>
+      <main className="flex-grow p-6">
+        <h1 className="text-2xl font-semibold text-blue-800 dark:text-blue-300 mb-6">Pending Requests</h1>
 
         {requests.length === 0 ? (
-          <p className="text-gray-600">No pending requests at the moment.</p>
+          <p className="text-gray-600 dark:text-gray-300">No pending requests at the moment.</p>
         ) : (
           requests.map((req) => (
             <RequestCard
@@ -130,14 +130,14 @@ const fetchPendingRequests = async () => {
         {/* Reject Reason Modal */}
         {showRejectModal && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white p-5 rounded-lg shadow-lg text-center w-96">
+            <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-lg text-center w-96">
               <h3 className="text-lg font-semibold text-red-700 mb-3">Rejection Reason</h3>
               <input
                 type="text"
                 placeholder="Type the reason for rejection..."
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                className="mt-3 w-full border p-2 rounded"
+                className="mt-3 w-full border p-2 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
               />
               <div className="flex justify-around mt-4">
                 <button
@@ -152,7 +152,7 @@ const fetchPendingRequests = async () => {
                     setRejectReason('');
                     setSelectedRequestId(null);
                   }}
-                  className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+                  className="bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-100 hover:bg-gray-400 dark:hover:bg-gray-700"
                 >
                   Cancel
                 </button>
@@ -164,9 +164,9 @@ const fetchPendingRequests = async () => {
         {/* Approve Confirmation Modal */}
 {showApproveConfirmModal && selectedApproveRequest && (
   <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-    <div className="bg-white p-5 rounded-lg shadow-lg text-center w-96">
+    <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-lg text-center w-96">
       <h3 className="text-lg font-semibold text-blue-700 mb-3">Approve Booking</h3>
-      <p className="text-gray-800 mb-4">
+      <p className="text-gray-800 dark:text-gray-200 mb-4">
         Do you want to approve <strong>{selectedApproveRequest.time}</strong> in <strong>{selectedApproveRequest.lab}</strong> on <strong>{selectedApproveRequest.date}</strong>?
       </p>
       <div className="flex justify-around">
@@ -185,7 +185,7 @@ const fetchPendingRequests = async () => {
             setShowApproveConfirmModal(false);
             setSelectedApproveRequest(null);
           }}
-          className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+          className="bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-100 hover:bg-gray-400 dark:hover:bg-gray-700"
         >
           No
         </button>
@@ -197,9 +197,9 @@ const fetchPendingRequests = async () => {
         {/* Confirmation Modal */}
         {showConfirmation && (
           <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white p-5 rounded-lg shadow-lg text-center w-96">
+            <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-lg text-center w-96">
               <h3 className="text-lg font-semibold text-green-700 mb-3">Approved</h3>
-              <p className="text-gray-800 mb-4">{confirmationMessage}</p>
+              <p className="text-gray-800 dark:text-gray-200 mb-4">{confirmationMessage}</p>
               <button
                 onClick={() => setShowConfirmation(false)}
                 className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"

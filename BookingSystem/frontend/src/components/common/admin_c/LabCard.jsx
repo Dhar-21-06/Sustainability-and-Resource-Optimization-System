@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; 
 import SlotRow from './SlotRow';
 
 const LabCard = ({ labName, slots }) => {
@@ -9,13 +9,13 @@ const LabCard = ({ labName, slots }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 mb-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4">
       <div
         className="flex justify-between items-center cursor-pointer"
         onClick={toggleSlots}
       >
-        <h3 className="text-lg font-semibold text-blue-800">{labName}</h3>
-        <span className="text-gray-500">{open ? '▲' : '▼'}</span>
+        <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-300">{labName}</h3>
+        <span className="text-gray-500 dark:text-gray-300">{open ? '▲' : '▼'}</span>
       </div>
 
       {open && (
@@ -25,7 +25,7 @@ const LabCard = ({ labName, slots }) => {
               <SlotRow key={idx} time={slot.time} status={slot.status} />
             ))
           ) : (
-            <p className="text-gray-500 text-sm mt-2">No slots available.</p>
+            <p className="text-gray-500 dark:text-gray-300 text-sm mt-2">No slots available.</p>
           )}
         </div>
       )}

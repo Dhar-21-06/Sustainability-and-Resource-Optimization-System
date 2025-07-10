@@ -56,7 +56,7 @@ const BookAudi = () => {
         const res = await axios.get(`${Backend_url}/api/auth/me`, {
           withCredentials: true // <-- Add this if using cookies
         });
-
+        console.log("✅ User fetched:", res.data);
         setUser(res.data);
       } catch (err) {
         console.error("Failed to fetch user", err);
@@ -75,7 +75,7 @@ const BookAudi = () => {
           withCredentials: true
         });
         const booked = res.data.booked || [];
-        const userBooked = booked.filter(b => String(b.userId) === String(user._id)).map(b => b.time);
+        const userBooked = booked.filter(b => String(b.userId?._id || b.userId) === String(user._id)).map(b => b.time);
 
         setUserBookedSlots(prev => ({
           ...prev,
@@ -83,7 +83,8 @@ const BookAudi = () => {
         }));
 
         const pending = res.data.pending || [];
-        const userPending = pending.filter(b => String(b.userId) === String(user._id)).map(b => b.time);
+        const userPending = pending.filter(b => String(b.userId?._id || b.userId) === String(user._id)).map(b => b.time);
+
 
         setBookedSlots(prev => ({ ...prev, [selectedAudi._id]: booked.map(b => b.time) }));
         setMyPendingSlots(prev => ({ ...prev, [selectedAudi._id]: userPending }));
@@ -237,8 +238,9 @@ const BookAudi = () => {
       const booked = res.data.booked || [];
       const pending = res.data.pending || [];
 
-      const userBooked = booked.filter(b => String(b.userId) === String(user._id)).map(b => b.time);
-      const userPending = pending.filter(b => String(b.userId) === String(user._id)).map(b => b.time);
+      const userBooked = booked.filter(b => String(b.userId?._id || b.userId) === String(user._id)).map(b => b.time);
+      const userPending = pending.filter(b => String(b.userId?._id || b.userId) === String(user._id)).map(b => b.time);
+
 
       setBookedSlots(prev => ({ ...prev, [selectedAudi._id]: booked.map(b => b.time) }));
       setUserBookedSlots(prev => ({ ...prev, [selectedAudi._id]: userBooked }));
@@ -330,7 +332,7 @@ const BookAudi = () => {
 
                   const pendingForOthers = allPendingBookings.some(
                     (b) =>
-                      b.userId !== user._id &&
+                      String(b.userId?._id || b.userId) !== String(user._id) &&  // fix here
                       b.lab === selectedAudi.name &&
                       b.date === selectedDate &&
                       b.time === slot

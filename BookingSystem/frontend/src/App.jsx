@@ -43,7 +43,7 @@ function App() {
   <Route path="/admin/profile" element={<AdminProfile />} />
   <Route path="/faculty/notifications" element={<Notifications />} />
   <Route path="/admin/notifications" element={<AdminNotification />} />
-  
+  <Route path="/book-an-auditorium" element={<BookAudi/>} />
 
 </Routes>
     </>
