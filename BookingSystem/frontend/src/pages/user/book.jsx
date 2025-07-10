@@ -49,7 +49,7 @@ const Book = () => {
 
     const fetchUser = async () => {
       try {
-    const res = await axios.get(`${Backend_url}:5000/api/auth/me`, {
+    const res = await axios.get(`${Backend_url}/api/auth/me`, {
       withCredentials: true,
     });
 

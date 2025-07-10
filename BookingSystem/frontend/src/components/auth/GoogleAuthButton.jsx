@@ -6,7 +6,8 @@
   console.log("working");
 
   const Backend_url = import.meta.env.VITE_BACKEND;
-  console.log(Backend_url);
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
 
   const GoogleAuthButton = ({ role }) => {
     const navigate = useNavigate();
@@ -22,11 +23,13 @@
     console.log("✅ Google Auth Response:", res.data);
 
     // ✅ Now fetch /me to verify token and get complete user details
-    const meRes = await axios.get('http://localhost:5000/api/auth/me', {
+    const meRes = await axios.get(`${Backend_url}/api/auth/me`, {
       withCredentials: true
     });
 
     console.log("👤 Verified user from /me:", meRes.data);
+    localStorage.setItem("user", JSON.stringify(meRes.data));
+    console.log(JSON.stringify(meRes.data, null, 2));
 
     const roleFromMe = meRes.data.role;
     if (roleFromMe === 'faculty') {
@@ -43,7 +46,7 @@
 };
 
     return (
-      <GoogleOAuthProvider clientId="850633048309-6m4iriht6aq14t4p3l64arnilkr19rsc.apps.googleusercontent.com">
+      <GoogleOAuthProvider clientId={clientId}>
         <GoogleLogin
           onSuccess={handleSuccess}
           onError={() => {

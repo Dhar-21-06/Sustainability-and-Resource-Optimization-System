@@ -1,0 +1,29 @@
+.system-nav-container {
+  text-align: center;
+  padding: 50px;
+  background: #f6f6f6;
+  height: 100vh;
+}
+
+.system-nav-title {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+}
+
+.system-nav-buttons button {
+  display: block;
+  width: 220px;
+  padding: 15px;
+  margin: 20px auto;
+  font-size: 1.2rem;
+  border: none;
+  background: #008080;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.system-nav-buttons button:hover {
+  background: #005555;
+}
