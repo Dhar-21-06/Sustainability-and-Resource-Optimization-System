@@ -4,7 +4,7 @@ const cors = require('cors');
 const { InfluxDB } = require('@influxdata/influxdb-client');
 
 const app = express();
-const PORT = 5000;
+const PORT = 5002;
 
 app.use(cors());
 

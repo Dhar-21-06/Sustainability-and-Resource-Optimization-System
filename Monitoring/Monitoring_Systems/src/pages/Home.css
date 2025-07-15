@@ -16,9 +16,8 @@ html,
   height: 100vh;
   width: 100vw;
   background-color: #f2f6fc;
-  overflow: hidden; /* ⛔ This prevents child from scrolling! */
+  overflow: hidden;
 }
-
 
 /* Sidebar styling */
 .sidebar {
@@ -30,7 +29,8 @@ html,
   font-weight: bold;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  gap: 1rem;
   transition: background-color 0.3s ease;
 }
 
@@ -38,18 +38,45 @@ html,
   background-color: #223449;
 }
 
+/* CIT Logo in sidebar */
+.sidebar-logo {
+  width: 100%;
+  max-width: 140px;
+  height: auto;
+  object-fit: contain;
+  background-color: #ffffff;
+  padding: 8px;
+  border-radius: 8px;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+}
+
+/* Refresh button */
+.dashboard-refresh-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.dashboard-refresh-btn:hover {
+  text-decoration: underline;
+  color: #90caf9;
+}
+
 /* Main content area */
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;         /* ✅ Allows a little scroll */
-  max-height: 100vh;        /* ⬅️ Prevents full page scroll explosion */
-  padding-bottom: 1rem;     /* Some breathing space at bottom */
+  overflow-y: auto;
+  max-height: 100vh;
+  padding-bottom: 1rem;
 }
-
-
-
 
 /* Title above the cards */
 .dashboard-title {
@@ -59,6 +86,8 @@ html,
   font-weight: 600;
   transition: color 0.3s ease, text-shadow 0.3s ease;
   cursor: pointer;
+  margin-top: 0.5rem;
+  margin-left: 1rem;
 }
 
 .dashboard-title:hover {
@@ -66,7 +95,7 @@ html,
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Logo/Header */
+/* Header with centered CITBIF logo only */
 .dashboard-header {
   background-color: #e8f0fe;
   padding: 0.5rem 1rem;
@@ -74,28 +103,22 @@ html,
   justify-content: center;
   align-items: center;
   border-radius: 8px;
-  margin-bottom: 0.5rem;
+  margin: 0 1rem 0.5rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   height: 80px;
-  flex-wrap: wrap;
 }
 
-.logo-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 60px; /* ⬅️ Increase this for more space */
-  flex-wrap: wrap;
-}
-
-
-
-.institution-logo {
+.dashboard-header img {
   max-height: 60px;
   max-width: 160px;
   object-fit: contain;
+  transition: transform 0.3s ease, filter 0.3s ease;
 }
 
+.dashboard-header img:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 4px rgba(33, 150, 243, 0.6));
+}
 
 /* Cards section */
 .cards {
@@ -156,7 +179,7 @@ html,
   padding: 1rem;
   box-sizing: border-box;
   flex-shrink: 1;
-  min-height: 0; /* Important for preventing overflow */
+  min-height: 0;
 }
 
 .grafana-block {
@@ -189,11 +212,10 @@ html,
 .grafana-block iframe {
   flex: 1;
   width: 100%;
-  height: 220px;            /* ⬆️ Previously ~230px, now slightly bigger */
+  height: 220px;
   border: none;
   border-radius: 6px;
 }
-
 
 /* Alert/info messages */
 .alert-message {
@@ -206,21 +228,4 @@ html,
   color: #ffeb3b;
   font-weight: 500;
   margin-top: 10px;
-}
-
-/* Refresh button */
-.dashboard-refresh-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-}
-
-.dashboard-refresh-btn:hover {
-  text-decoration: underline;
-  color: #90caf9;
 }

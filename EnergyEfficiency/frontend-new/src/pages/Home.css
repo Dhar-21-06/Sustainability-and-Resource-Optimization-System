@@ -5,8 +5,8 @@ html,
   padding: 0;
   height: 100vh;
   width: 100vw;
-  font-family: 'Segoe UI', sans-serif;
-  overflow: hidden; /* prevent scrollbars */
+  font-family: "Segoe UI", sans-serif;
+  overflow: hidden;
 }
 
 .dashboard-body {
@@ -23,6 +23,10 @@ html,
   padding: 1.5rem 1rem;
   font-size: 1.3rem;
   font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
   transition: background-color 0.3s ease;
 }
 
@@ -30,13 +34,60 @@ html,
   background-color: #223449;
 }
 
+/* Sidebar CIT logo */
+.sidebar-logo {
+  width: 100%;
+  max-width: 140px;
+  height: auto;
+  object-fit: contain;
+}
+
+.dashboard-refresh-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.dashboard-refresh-btn:hover {
+  text-decoration: underline;
+  color: #90caf9;
+}
+
 .main-content {
   flex: 1;
   padding: 1rem 1.5rem;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* prevents scroll */
+  overflow-y: auto;
   height: 100%;
+}
+
+/* Centered CITBIF logo */
+.dashboard-header {
+  background-color: #e8f0fe;
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  margin-bottom: 0.8rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-header img {
+  height: 60px;
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
+.dashboard-header img:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 4px rgba(33, 150, 243, 0.6));
 }
 
 .dashboard-title {
@@ -52,44 +103,13 @@ html,
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Header with logos */
-.dashboard-header {
-  background-color: #e8f0fe;
-  padding: 0.5rem 1rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  height: 65px;
-}
-
-.logo-group {
-  display: flex;
-  gap: 2rem;
-  align-items: center;
-}
-
-.logo-group img {
-  height: 45px;
-  object-fit: contain;
-  padding: 0 8px;
-  transition: transform 0.3s ease, filter 0.3s ease;
-}
-
-.logo:hover {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 4px rgba(33, 150, 243, 0.6));
-}
-
-/* Info cards row */
+/* Info cards */
 .cards {
   display: flex;
   gap: 1rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
   flex-wrap: nowrap;
-  height: 22vh; /* fits cleanly */
+  height: auto;
 }
 
 .card {
@@ -100,7 +120,8 @@ html,
   padding: 1rem;
   font-size: 0.95rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.2s ease, background-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .card:hover {
@@ -131,12 +152,12 @@ html,
   color: #ffffff;
 }
 
-/* Grafana graphs */
+/* Grafana panel area */
 .grafana-row {
-  flex: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+  flex: 1;
   min-height: 0;
 }
 
@@ -147,7 +168,6 @@ html,
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
-  min-height: 0;
   transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
@@ -171,24 +191,38 @@ html,
 .grafana-block iframe {
   flex: 1;
   width: 100%;
-  min-height: 0;
+  min-height: 300px;
   border: none;
   border-radius: 5px;
 }
 
-.dashboard-refresh-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-  transition: color 0.3s ease;
+.sidebar-logo-container {
+  background-color: #ffffff;
+  padding: 8px;
+  border-radius: 8px;
+  display: inline-block;
 }
 
-.dashboard-refresh-btn:hover {
-  text-decoration: underline;
-  color: #90caf9;
+.sidebar-logo {
+  width: 100%;
+  max-width: 140px;
+  height: auto;
+  object-fit: contain;
+  background-color: #ffffff;
+  padding: 8px;
+  border-radius: 8px;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+}
+
+.clickable-title {
+  font-size: 2rem;
+  color: #1e2a3a;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.clickable-title:hover {
+  color: #0d47a1;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
 }

@@ -37,25 +37,25 @@ const Home = () => {
   return (
     <div className="dashboard-body">
       <aside className="sidebar">
-  <button
-    className="dashboard-refresh-btn"
-    onClick={() => window.location.reload()}
-    title="Click to refresh dashboard"
-  >
-    IoT Dashboard
-  </button>
-</aside>
+        <img src="/images/logo-cit.png" alt="CIT Logo" className="sidebar-logo" />
+      </aside>
 
       <main className="main-content">
-        <h1 className="dashboard-title">Resource Monitoring</h1>
-        <header className="dashboard-header">
-  <div className="logo-section">
-  <img src="/images/logo-cit.png" alt="CIT Logo" className="institution-logo" />
-  <img src="/images/logo-citbif.png" alt="CITBIF Logo" className="institution-logo" />
-  <img src="/images/logo-citil.png" alt="CITIL Logo" className="institution-logo" />
-</div>
+        <h1 className="dashboard-title" onClick={() => window.location.reload()}>
+  CIT Resource Monitoring
+</h1>
 
-</header>
+        <button
+          className="dashboard-refresh-btn"
+          onClick={() => window.location.reload()}
+          title="Click to refresh dashboard"
+        >
+        </button>
+
+        {/* Header with CITBIF logo centered */}
+        <header className="dashboard-header">
+          <img src="/images/logo-citbif.png" alt="CITBIF Logo" className="institution-logo" />
+        </header>
 
         {error && (
           <div className="error-message">
@@ -64,7 +64,6 @@ const Home = () => {
         )}
 
         <div className="cards">
-          {/* 🔹 Water Card */}
           <div className="card">
             <h3>Water Monitoring</h3>
             <p><strong>Water Level:</strong> {waterData?.level || 'No recent data'}</p>
@@ -82,7 +81,6 @@ const Home = () => {
             ) : null}
           </div>
 
-          {/* 🔸 Electricity Card */}
           <div className="card">
             <h3>Electricity Monitoring</h3>
             <p><strong>Today's Consumption:</strong> {electricityData?.today || 'No recent data'}</p>
