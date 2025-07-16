@@ -39,15 +39,21 @@ html,
 }
 
 /* CIT Logo in sidebar */
-.sidebar-logo {
-  width: 100%;
-  max-width: 140px;
-  height: auto;
-  object-fit: contain;
-  background-color: #ffffff;
+.sidebar-logo-container {
+  background-color: #ffffff; /* white background for contrast */
   padding: 8px;
-  border-radius: 8px;
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* optional soft shadow */
+}
+
+.sidebar-logo {
+  height: 40px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.9)); /* white glow */
 }
 
 /* Refresh button */
@@ -76,6 +82,7 @@ html,
   overflow-y: auto;
   max-height: 100vh;
   padding-bottom: 1rem;
+  position: relative;
 }
 
 /* Title above the cards */
@@ -118,6 +125,42 @@ html,
 .dashboard-header img:hover {
   transform: scale(1.1);
   filter: drop-shadow(0 0 4px rgba(33, 150, 243, 0.6));
+}
+
+/* Notification */
+.notification-container {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  z-index: 999;
+}
+
+.notification-box {
+  background-color: #ffffff;
+  color: #000;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  max-width: 300px;
+  margin-top: 0.5rem;
+}
+
+.notification-box ul {
+  padding-left: 1rem;
+  margin-top: 0.5rem;
+}
+
+.notification-box li {
+  margin-bottom: 6px;
+}
+
+.notification-box .see-all-link {
+  text-align: right;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #1565c0;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* Cards section */
@@ -229,3 +272,69 @@ html,
   font-weight: 500;
   margin-top: 10px;
 }
+
+.notification-button {
+  position: relative;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #1e2a3a;
+}
+
+.notification-button:hover {
+  color: #1565c0;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 2rem;
+  right: 0;
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 1rem;
+  width: 300px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.notification-dropdown strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #1e2a3a;
+}
+
+.notification-dropdown ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.notification-dropdown li {
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.notification-dropdown .see-all {
+  text-align: right;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  color: #1565c0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background-color: red;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 50%;
+  font-weight: bold;
+}
+
+
